@@ -5,10 +5,11 @@ import pandas as pd
 
 url = "https://api.pokemontcg.io/v2/cards"
 
-def import_data(url):
+def import_data():
     page = 1
     all_cards = []
-    for i in range(5):
+    #here for tests, replace it by 'while True' after
+    for i in range(1):
         params = {"page": page, "pageSize": 250} 
         response = requests.get(url, params=params)
 
@@ -21,7 +22,7 @@ def import_data(url):
         else:
             print(f"Erreur: {response.status_code}")
             break
-    return all_cards
+    return pd.DataFrame(all_cards)
 
 
 
@@ -50,7 +51,16 @@ variables_to_drop=['attacks',
                     'cardmarket'
                     
 ]
-
+new_order=["id",
+            "name",
+            "rarity",
+            "collection",
+            "series",
+            "holofoil_price",
+            "reverse_holofoil_price",
+            "url",
+            "nationalPokedexNumbers",
+            "artist"]
 
 def get_prices(x):
     if pd.isna(x["tcgplayer"]) or x["rarity"] == "Common" or pd.isna(x["rarity"]):
@@ -66,20 +76,18 @@ def get_prices(x):
     if (holofoil_price is not None and holofoil_price > 10) or (reverse_holofoil_price is not None and reverse_holofoil_price > 10):
         return x["tcgplayer"].get("url", None), holofoil_price, reverse_holofoil_price
     else:
-        return None, None, None
-    
-    
+        return None, None, None    
+
+
+
 def filter_holofoil_data(df):
     df[["url", "holofoil_price", "reverse_holofoil_price"]] = df.apply(get_prices, axis=1, result_type="expand")
     df_cleaned = df.dropna(subset=["url"])
     df_cleaned = df_cleaned[(df_cleaned["rarity"] != "Common") & ((df_cleaned["holofoil_price"] > 10) | (df_cleaned["reverse_holofoil_price"] > 10))]
-    print(df_cleaned["set"])
     df_cleaned["collection"]=df_cleaned["set"].apply(lambda x:x["name"])
     df_cleaned["series"]=df_cleaned["set"].apply(lambda x:x["series"])
     
     #drop all the variables we used or not
     df_cleaned = df_cleaned.drop(columns=variables_to_drop, errors='ignore')
-
-
+    df_cleaned=df_cleaned[new_order]
     return df_cleaned
-
