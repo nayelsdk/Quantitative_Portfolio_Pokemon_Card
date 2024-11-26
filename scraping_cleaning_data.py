@@ -59,6 +59,7 @@ new_order=["id",
             "holofoil_price",
             "reverse_holofoil_price",
             "url",
+            "release_date",
             "nationalPokedexNumbers",
             "artist"]
 
@@ -86,6 +87,7 @@ def filter_holofoil_data(df):
     df_cleaned = df_cleaned[(df_cleaned["rarity"] != "Common") & ((df_cleaned["holofoil_price"] > 10) | (df_cleaned["reverse_holofoil_price"] > 10))]
     df_cleaned["collection"]=df_cleaned["set"].apply(lambda x:x["name"])
     df_cleaned["series"]=df_cleaned["set"].apply(lambda x:x["series"])
+    df_cleaned["release_date"] = df_cleaned["set"].apply(lambda x: x.get("releaseDate", None))
     
     #drop all the variables we used or not
     df_cleaned = df_cleaned.drop(columns=variables_to_drop, errors='ignore')
