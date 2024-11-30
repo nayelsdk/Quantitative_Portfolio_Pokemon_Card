@@ -9,7 +9,7 @@ def import_data():
     page = 1
     all_cards = []
     #here for tests, replace it by 'while True' after
-    for i in range(1):
+    for i in range(4):
         params = {"page": page, "pageSize": 250} 
         response = requests.get(url, params=params)
 
