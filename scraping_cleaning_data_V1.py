@@ -1,29 +1,40 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+from datetime import datetime
 
 
 url = "https://api.pokemontcg.io/v2/cards"
 
 def import_data():
+    """
+    Retrieves all available cards from the Pokemon TCG API.
+    
+    Returns:
+        pandas.DataFrame: DataFrame containing all cards with their raw information
+        
+    Example:
+        df = import_data()
+        # Returns a DataFrame with columns like id, name, rarity, etc.
+    """
     page = 1
     all_cards = []
-    #here for tests, replace it by 'while True' after
-    for i in range(4):
-        params = {"page": page, "pageSize": 250} 
+    
+    while True:
+        params = {"page": page, "pageSize": 250}
         response = requests.get(url, params=params)
 
         if response.status_code == 200:
             data = response.json()["data"]
             if not data:
-                break 
+                break
             all_cards.extend(data)
-            page += 1  
+            page += 1
         else:
             print(f"Erreur: {response.status_code}")
             break
+            
     return pd.DataFrame(all_cards)
-
 
 
 variables_to_drop=['attacks',
@@ -48,7 +59,8 @@ variables_to_drop=['attacks',
                     'set',
                     'subtypes',
                     'tcgplayer',
-                    'cardmarket'
+                    'cardmarket',
+                    'url'
                     
 ]
 new_order=["id",
@@ -58,12 +70,23 @@ new_order=["id",
             "series",
             "holofoil_price",
             "reverse_holofoil_price",
-            "url",
             "release_date",
             "nationalPokedexNumbers",
             "artist"]
 
 def get_prices(x):
+    """
+    Extracts holofoil and reverse holofoil prices for a card.
+    
+    Args:
+        x (dict): Dictionary containing card information
+        
+    Returns:
+        tuple: (url, holofoil_price, reverse_holofoil_price)
+        
+    Note:
+        Returns None values if the card is common or prices are below threshold
+    """
     if pd.isna(x["tcgplayer"]) or x["rarity"] == "Common" or pd.isna(x["rarity"]):
         return None, None, None
     
@@ -81,7 +104,23 @@ def get_prices(x):
 
 
 
-def filter_holofoil_data(df, threshold_price=20):
+def filter_holofoil_data(df, threshold_price=5):
+    """
+    Cleans and filters card data based on rarity and price.
+    
+    Args:
+        df (pandas.DataFrame): DataFrame containing raw data
+        threshold_price (float, optional): Minimum price to keep a card. Defaults to 5.
+        
+    Returns:
+        pandas.DataFrame: Cleaned DataFrame containing only valuable cards
+        
+    Note:
+        - Removes common cards
+        - Keeps only cards above threshold price
+        - Extracts collection and series information
+        - Removes unnecessary columns
+    """
     df[["url", "holofoil_price", "reverse_holofoil_price"]] = df.apply(get_prices, axis=1, result_type="expand")
     df_cleaned = df.dropna(subset=["url"])
     df_cleaned = df_cleaned[(df_cleaned["rarity"] != "Common") & ((df_cleaned["holofoil_price"] > threshold_price) | (df_cleaned["reverse_holofoil_price"] > threshold_price))]
