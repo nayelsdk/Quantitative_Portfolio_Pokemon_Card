@@ -81,7 +81,7 @@ def get_prices(x):
 
 
 
-def filter_holofoil_data(df, threshold_price):
+def filter_holofoil_data(df, threshold_price=20):
     df[["url", "holofoil_price", "reverse_holofoil_price"]] = df.apply(get_prices, axis=1, result_type="expand")
     df_cleaned = df.dropna(subset=["url"])
     df_cleaned = df_cleaned[(df_cleaned["rarity"] != "Common") & ((df_cleaned["holofoil_price"] > threshold_price) | (df_cleaned["reverse_holofoil_price"] > threshold_price))]

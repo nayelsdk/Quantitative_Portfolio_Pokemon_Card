@@ -76,7 +76,6 @@ def extract_html_code_1Y(website):
     try:
         driver.get(website)
         print("Page chargée avec succès")
-        
         wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
         
         # Cliquer sur le bouton 1Y
