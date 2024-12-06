@@ -9,7 +9,8 @@ from tqdm import tqdm
 from bs4 import BeautifulSoup
 from datetime import datetime
 
-from selenium import webdriver
+from selenium import webdriver 
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -45,31 +46,16 @@ def setup_driver():
     # Initialize and return the WebDriver
     return webdriver.Chrome(service=service, options=chrome_options)
 
-
 def test_button_click(driver, wait, selector, by=By.CSS_SELECTOR):
     """
     Attempts to click on a web element using JavaScript after ensuring it's present and centered.
-    
-    Args:
-        driver: Selenium WebDriver instance
-        wait: WebDriverWait instance for explicit waits
-        selector: String selector to locate the element
-        by: Selenium By method to locate element (default: CSS_SELECTOR)
-    
-    Returns:
-        bool: True if click successful, False otherwise
-    
-    Features:
-        - Explicit wait for element presence
-        - Centered scrolling for better visibility
-        - JavaScript click for reliability
-        - Error handling with detailed feedback
     """
     try:
-        # Wait for element to be present in DOM
+        # Wait for element to be present in DOM with longer timeout
+        wait = WebDriverWait(driver, 20)
         element = wait.until(EC.presence_of_element_located((by, selector)))
         
-        # Center element in viewport using smooth scrolling
+        # Center element in viewport
         driver.execute_script("""
             arguments[0].scrollIntoView({
                 behavior: 'instant',
@@ -78,11 +64,22 @@ def test_button_click(driver, wait, selector, by=By.CSS_SELECTOR):
             });
         """, element)
         
-        # Ensure element is clickable
-        wait.until(EC.element_to_be_clickable((by, selector)))
+        # Pause court pour laisser le temps au scroll de se terminer
+        time.sleep(0.5)
         
-        # Use JavaScript click for better reliability
-        driver.execute_script("arguments[0].click();", element)
+        # Essayer plusieurs méthodes de clic
+        try:
+            # Méthode 1: Clic JavaScript direct
+            driver.execute_script("arguments[0].click();", element)
+        except:
+            try:
+                # Méthode 2: Actions chains
+                actions = ActionChains(driver)
+                actions.move_to_element(element).click().perform()
+            except:
+                # Méthode 3: Clic Selenium standard
+                element.click()
+                
         return True
         
     except Exception as e:
@@ -172,7 +169,7 @@ def get_html_content(website, holofoil_price, reverse_holofoil_price):
         
         # Define click sequence for data filtering
         initial_clicks = [
-            ('CSS_SELECTOR', 'button[data-v-0177b97d][class*="charts-item"]:last-child'),   # 1Y timeframe button
+            ('CSS_SELECTOR', 'button[data-v-0177b97d][class="charts-item"]:last-child'),   # 1Y timeframe button
             ('CSS_SELECTOR', 'div.modal__activator[role="button"]'),                        # View More Data button
             ('CSS_SELECTOR', 'button.sales-history-snapshot__show-filters'),                # Sales Filter button
             ('XPATH', '//label[span[text()="Near Mint"]]')                                  # Near Mint condition filter
@@ -189,28 +186,25 @@ def get_html_content(website, holofoil_price, reverse_holofoil_price):
         holofoil_valid = not pd.isna(holofoil_price)
         reverse_valid = not pd.isna(reverse_holofoil_price)
         
-        holo_selector='//span[@class="checkbox_option-value checkbox_option-value-mobile" and text()="Holofoil"]'
-        reverse_holo_selector='//span[@class="checkbox_option-value checkbox_option-value-mobile" and text()="Reverse Holofoil"]'
+        holo_selector = '//span[@class="checkbox__option-value checkbox__option-value-mobile" and text()="Holofoil"]'
+        reverse_holo_selector = '//span[@class="checkbox__option-value checkbox__option-value-mobile" and text()="Reverse Holofoil"]'
             
         if holofoil_valid and reverse_valid:
             # we take the highest price ! 
 
             if holofoil_price > reverse_holofoil_price:
-                print('Selecting Normal (Holofoil)')
-                test_button_click(driver, wait, 
-                    holo_selector, By.XPATH)
+                print('Selecting Holofoil')
+                test_button_click(driver, wait, holo_selector, By.XPATH)
             else:
                 print('Selecting Reverse Holofoil')
-                test_button_click(driver, wait, 
-                    reverse_holo_selector, By.XPATH)
+                test_button_click(driver, wait, reverse_holo_selector, By.XPATH)
+                
         elif holofoil_valid:
             # If the holofoil price is valid
-            test_button_click(driver, wait, 
-                holo_selector, By.XPATH)
+            test_button_click(driver, wait, holo_selector, By.XPATH)
         elif reverse_valid:
             # If the reverse holofoil price is valid
-            test_button_click(driver, wait, 
-                reverse_holo_selector, By.XPATH)
+            test_button_click(driver, wait, reverse_holo_selector, By.XPATH)
         else:
             # No valid prices
             print("No valid prices found")
@@ -232,8 +226,6 @@ def get_html_content(website, holofoil_price, reverse_holofoil_price):
     finally:
         driver.quit()
         print("Browser session terminated")
-
-
 
 
 def extract_price_history(html_content):
