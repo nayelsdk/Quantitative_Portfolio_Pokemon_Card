@@ -10,16 +10,13 @@ This project aims to create a robust investment portfolio for Pokémon cards by 
 - Extract and organize price history data into structured CSV files.
 
 Portfolio_Pokemon_Card/
-│
 ├── data/
-│   ├── raw/                 # Scraped raw data
-│   └── processed/           # Cleaned datasets
-│
+│   ├── raw/           # Scraped raw data
+│   └── processed/     # Cleaned datasets
 ├── src/
-│   ├── scraping/           # Scraping scripts
-│   ├── analysis/           # Financial models
-│   └── visualization/      # Streamlit components
-│
-├── notebooks/              # Jupyter notebooks
-├── requirements.txt        # Dependencies
+│   ├── scraping/     # Scraping scripts
+│   ├── analysis/     # Financial models
+│   └── visualization/ # Streamlit components
+├── notebooks/        # Jupyter notebooks
+├── requirements.txt  # Dependencies
 └── README.md
