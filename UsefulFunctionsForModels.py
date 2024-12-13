@@ -199,8 +199,6 @@ def attribute_fiability_score(folder_path):
 
     This function processes CSV files containing sales data and computes a reliability
     score using a rational formula: total_sales) / (total_sales + c). Here c=10.
-    This provides a more gradual increase in reliability score compared to the exponential
-    version, requiring more sales to reach higher scores.
 
     Parameters:
         folder_path (str): Path to the directory containing CSV files.

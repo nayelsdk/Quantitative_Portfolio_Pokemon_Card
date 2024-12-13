@@ -19,8 +19,6 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 
 
-
-
 def setup_driver():
     """
     Configure and initialize a headless Chrome WebDriver for web scraping.
@@ -344,15 +342,21 @@ def save_historic_prices(cards_df, output_dir='price_history'):
         'high_sales': os.path.join(output_dir, 'high_sales')
     }
     
+    failed_ids = load_failed_ids()
+    
     for subdir in subdirs.values():
         os.makedirs(subdir, exist_ok=True)
     
     with tqdm(total=len(cards_df), desc="Price Extraction", position=0, leave=True) as pbar:
         for index, card_row in cards_df.iterrows():
             card_id = card_row['id']
+            
+            if card_id in failed_ids:
+                pbar.update(1)
+                continue
+                
             pbar.set_postfix_str(f"Processing {card_id}", refresh=True)
             
-            # Vérifier l'existence du fichier
             file_exists = False
             for subdir in subdirs.values():
                 if glob.glob(os.path.join(subdir, f'{card_id}_*.csv')):
@@ -394,6 +398,22 @@ def save_historic_prices(cards_df, output_dir='price_history'):
                 
             except Exception as e:
                 pbar.set_postfix_str(f"Failed {card_id}: {str(e)}", refresh=True)
+                save_failed_id(card_id)
+                failed_ids.add(card_id)
             
             pbar.update(1)
             time.sleep(1)
+
+
+def load_failed_ids(file_path='failed_ids.txt'):
+    """Load the IDs that failed from a txt file"""
+    try:
+        with open(file_path, 'r') as f:
+            return set(line.strip() for line in f)
+    except FileNotFoundError:
+        return set()
+
+def save_failed_id(card_id, file_path='failed_ids.txt'):
+    """Add a new ID that that faild to the txt file"""
+    with open(file_path, 'a') as f:
+        f.write(f"{card_id}\n")
