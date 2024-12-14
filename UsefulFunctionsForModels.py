@@ -198,7 +198,7 @@ def attribute_fiability_score(folder_path):
     Calculates a more conservative reliability score for each card based on sales volume data.
 
     This function processes CSV files containing sales data and computes a reliability
-    score using a rational formula: total_sales) / (total_sales + c). Here c=10.
+    score using a rational formula: x - min(x) / max(x)-min(x)
 
     Parameters:
         folder_path (str): Path to the directory containing CSV files.
@@ -215,7 +215,7 @@ def attribute_fiability_score(folder_path):
         {'card1': 0.75, 'card2': 0.62}
 
     Notes:
-        - Score formula: log(1 + x) / (1 + log(1 + x)) where x is total_sales
+        - Score formula: x - min(x) / max(x)-min(x) where x is total_sales
         - Score range: [0,1) where:
           * 0 indicates no sales
           * Values increase more gradually than exponential
@@ -231,9 +231,10 @@ def attribute_fiability_score(folder_path):
                 
                 # Calculate total sales
                 sum_sales_card = np.sum(df["quantity_sold"])
-                
-                # Calculate reliability score using logarithmic formula
-                score = sum_sales_card / (10 + sum_sales_card)
+                #min =np.min(df["quantity_sold"])
+                #max =np.max(df["quantity_sold"])
+                # Calculate reliability score using the formula
+                score = sum_sales_card
                 
                 # Extract card ID from filename
                 card_id = os.path.basename(file).replace('.csv', '')
@@ -241,5 +242,15 @@ def attribute_fiability_score(folder_path):
                 
             except Exception as e:
                 print(f"Error processing {file}: {e}")
-                
-    return cards_fiability
+    values = np.array(list(cards_fiability.values()))
+    min_val = np.min(values)
+    max_val = np.max(values)
+    
+    if max_val == min_val:
+        normalized_cards_fiability = {key: 1.0 for key in cards_fiability}
+    else:
+        normalized_cards_fiability = {
+            key: float(round((value - min_val) / (max_val - min_val),4))
+            for key, value in cards_fiability.items()
+        }
+    return normalized_cards_fiability
