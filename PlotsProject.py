@@ -2,6 +2,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import pandas as pd
+import numpy as np
 
 
 
@@ -125,3 +126,44 @@ def plot_price_quantity_variation_seaborn(df):
     
     plt.tight_layout()
     return fig, (ax1, ax2)
+
+
+def plot_covariance_heatmap(covariance_matrix):
+    correlation_matrix = covariance_matrix.corr()
+
+    # Créer une figure avec une taille adaptée au nombre de variables
+    plt.figure(figsize=(20, 16))
+    
+    # Créer la heatmap avec des paramètres optimisés
+    mask = np.triu(np.ones_like(correlation_matrix), k=1)  # Masque pour le triangle supérieur
+    
+    sns.heatmap(correlation_matrix,
+                mask=mask,  # Afficher seulement le triangle inférieur
+                annot=True,  # Afficher les valeurs
+                fmt='.2f',  # Format à 2 décimales
+                cmap='RdBu_r',  # Palette de couleurs
+                center=0,  # Centrer la colormap sur 0
+                square=True,  # Cellules carrées
+                linewidths=0.5,  # Largeur des lignes de séparation
+                cbar_kws={
+                    'label': 'Corrélation',
+                    'shrink': .8,
+                    'aspect': 30,
+                    'pad': 0.03
+                },
+                annot_kws={'size': 8})
+
+    # Personnaliser les labels et le titre
+    plt.title('Matrice de Corrélation des Prix des Cartes', 
+              pad=20, 
+              size=16, 
+              weight='bold')
+    
+    # Rotation des labels pour une meilleure lisibilité
+    plt.xticks(rotation=45, ha='right')
+    plt.yticks(rotation=0)
+    
+    # Ajuster automatiquement la mise en page
+    plt.tight_layout()
+    
+    return plt
