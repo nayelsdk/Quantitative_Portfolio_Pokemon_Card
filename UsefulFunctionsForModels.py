@@ -1,8 +1,6 @@
 import os
 import pandas as pd
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
 
 def get_file_paths(directory):
     """
@@ -30,25 +28,66 @@ def get_file_paths(directory):
     return file_paths
 
 def get_last_price(df):
-    # Read the CSV file
-    # Determine price column name ('Close' or 'price')
+    """
+    Extracts the last price from a DataFrame based on the column name ('Close' or 'price').
+
+    Args:
+        df (pd.DataFrame): A DataFrame containing price data.
+
+    Returns:
+        float: The last price in the specified column
+    """
     price_column = 'Close' if 'Close' in df.columns else 'price'
-    # Get the last price
     last_price = df[price_column].iloc[-1]
     return last_price
 
 def get_mean_return_card (df):
+    """
+    Calculates the mean logarithmic return of prices in a DataFrame.
+
+    Args:
+        df (pd.DataFrame): A DataFrame containing price data.
+
+    Returns:
+        float: The mean logarithmic return, rounded to 4 decimal places.
+
+    Notes:
+        - Missing values are dropped during computation.
+    """
     price_column = 'Close' if 'Close' in df.columns else 'price'
     log_returns = np.log(df[price_column] / df[price_column].shift(1)).dropna()
     mean_return=np.mean(log_returns)
     return round(mean_return,4)
 
 def sigmoid_discrete(x, k, x0):
+    """
+    Computes a sigmoid function for a given input for a fiability rate for each card.
+
+    Args:
+        x (float): The input value.
+        k (float): The steepness of the curve.
+        x0 (float): The midpoint of the sigmoid curve.
+
+    Returns:
+        float: The sigmoid value for the input x.
+
+    Formula:
+        sigmoid(x) = 1 / (1 + exp(-k * (x - x0)))
+    """
     return 1 / (1 + np.exp(-k * (x - x0)))
 
 
 
 def get_fiability_card(df):
+    """
+    Calculates a "fiability" score for a card based on sales quantity using a sigmoid function.
+
+    Args:
+        df (pd.DataFrame): A DataFrame containing sales data with a column 'quantity_sold'.
+
+    Returns:
+        float: The fiability score.
+    """
     try:
         sum_sales_card = np.sum(df["quantity_sold"])
         fiability=sigmoid_discrete(sum_sales_card,k=0.3, x0=15)
@@ -58,7 +97,26 @@ def get_fiability_card(df):
 
 
 
-def get_dataframe_cards_matrix(folder_path): 
+def get_dataframe_cards_matrix(folder_path):
+    """
+    Generates a DataFrame summarizing all the information we need to compute the Markowitz model
+
+    Args:
+        folder_path (str): Path to the folder containing card CSV files.
+
+    Returns:
+        pd.DataFrame: A DataFrame with columns:
+            - card_id: Card identifier derived from file names.
+            - last_price: Last recorded price of each card.
+            - mean_return: Mean logarithmic return of each card's prices.
+            - fiability: Fiability score based on sales data and sigmoid function.
+            - fiability_dot_return: Product of fiability and mean return.
+
+    Example:
+        >>> cards_df = get_dataframe_cards_matrix("path/to/folder")
+        >>> print(cards_df.head())
+    """
+ 
     list_paths=get_file_paths(folder_path)
     dataframe_cards = {
         "card_id": [],
@@ -87,14 +145,25 @@ def get_dataframe_cards_matrix(folder_path):
 
         
 
-import os
-import pandas as pd
 
 def calculate_covariance_matrix(cards_df,folder_path = 'pokemon_cards'):
+    """
+    Computes the covariance matrix of card prices across multiple cards.
+
+    Args:
+        cards_df (pd.DataFrame): A DataFrame containing card IDs and related statistics.
+        folder_path (str, optional): Path to the folder containing CSV files for each card. Default is 'pokemon_cards'.
+
+    Returns:
+        pd.DataFrame: Covariance matrix of prices for all cards. Returns an empty DataFrame if no prices are available.
+
+    Notes:
+        - Each card's CSV file must include columns such as 'price', and optionally, date columns ('start_date', 'end_date') for proper parsing.
+        - Handles missing files or errors gracefully by printing error messages without interrupting execution.
+    """
     cards_prices = {}
     
     for _, row in cards_df.iterrows():
-        # Le card_id dans le DataFrame contient déjà le suffixe (_Holofoil, etc.)
         file_path = os.path.join(folder_path, f'{row["card_id"]}.csv')
         
         try:
@@ -118,3 +187,6 @@ def calculate_covariance_matrix(cards_df,folder_path = 'pokemon_cards'):
         return covariance_matrix
     else:
         return pd.DataFrame()
+
+
+    

@@ -17,7 +17,7 @@ class PokemonCardAPI:
         ]
         self.columns_order = [
             "id", "name", "rarity", "collection", "series", "holofoil_price",
-            "reverse_holofoil_price", "release_date", "nationalPokedexNumbers", "artist"
+            "reverse_holofoil_price", "release_date", "nationalPokedexNumbers", "artist", "images_url"
         ]
 
     def import_data(self):
@@ -35,7 +35,6 @@ class PokemonCardAPI:
         page = 1
         all_cards = []
         
-        # Première requête pour obtenir le nombre total de pages
         response = requests.get(self.api_url, params={"page": 1, "pageSize": 250})
         total_count = response.json()["totalCount"]
         total_pages = (total_count + 249) // 250
@@ -54,7 +53,7 @@ class PokemonCardAPI:
         
         return pd.DataFrame(all_cards)
 
-    def _get_prices(self, card, threshold=5):
+    def get_prices(self, card, threshold=5):
         """
         Extracts holofoil and reverse holofoil prices for a card.
         
@@ -81,30 +80,35 @@ class PokemonCardAPI:
     def filter_cards(self, df, threshold=5):
         """
         Cleans and filters card data based on rarity and price.
-        
+
         Args:
-            df (pandas.DataFrame): DataFrame containing raw data
-            threshold_price (float, optional): Minimum price to keep a card. Defaults to 5.
-            
+            df (pandas.DataFrame): DataFrame containing raw data.
+            threshold (float, optional): Minimum price to keep a card. Defaults to 5.
+
         Returns:
-            pandas.DataFrame: Cleaned DataFrame containing only valuable cards
-            
+            pandas.DataFrame: Cleaned DataFrame containing only valuable cards.
+
         Note:
-            - Removes common cards
-            - Keeps only cards above threshold price
-            - Extracts collection and series information
-            - Removes unnecessary columns
+            - Removes common cards.
+            - Keeps only cards above threshold price.
+            - Extracts collection, series, and release date information.
+            - Removes unnecessary columns.
+            - Adds the 'large' image URL from the 'images' column.
         """     
         tqdm.pandas(desc="Processing cards")
+        
         df[["url", "holofoil_price", "reverse_holofoil_price"]] = df.progress_apply(
-            self._get_prices, axis=1, result_type="expand"
+            self.get_prices, axis=1, result_type="expand"
         )
         
-        df_cleaned = df.dropna(subset=["url"])
+        df["images_url"] = df["images"].apply(lambda x: x["large"] if isinstance(x, dict) and "large" in x else None)
+        
+        df_cleaned = df.dropna(subset=["url", "images_url"])
+        
         df_cleaned = df_cleaned[
             (df_cleaned["rarity"] != "Common") & 
             ((df_cleaned["holofoil_price"] > threshold) | 
-             (df_cleaned["reverse_holofoil_price"] > threshold))
+            (df_cleaned["reverse_holofoil_price"] > threshold))
         ]
         
         for operation in tqdm(["collection", "series", "release_date"], desc="Extracting data"):
@@ -116,14 +120,16 @@ class PokemonCardAPI:
                 df_cleaned["release_date"] = df_cleaned["set"].apply(lambda x: x.get("releaseDate", None))
         
         df_cleaned = df_cleaned.drop(columns=self.variables_to_drop, errors='ignore')
+        
         return df_cleaned[self.columns_order]
+
 
 class PokemonCardDatabase:
     """Class to handle Pokemon card database operations"""
     def __init__(self, api_handler: PokemonCardAPI):
         self.api_handler = api_handler
 
-    def update_database(self, csv_path='pokemon_cards.csv'):
+    def update_database(self, csv_path='pokemon_cards.csv', popularity_csv="pokemon_data_popularity.csv"):
         """
     Creates or updates the Pokemon cards CSV file with current market prices.
     
@@ -144,14 +150,15 @@ class PokemonCardDatabase:
     
     File Structure:
         The CSV contains the following columns:
-        - id: Unique card identifier (e.g., 'dp3-3', 'base6-3')
-        - name: Pokemon name
-        - rarity: Card rarity (Rare Holo, Rare, Uncommon)
-        - collection: Set name (e.g., Secret Wonders, Emerald)
-        - series: Card series (Diamond & Pearl, EX, Base)
-        - holofoil_price: Market price for holofoil version
-        - reverse_holofoil_price: Market price for reverse holofoil version
-        - release_date: Card release date (YYYY/MM/DD)
+        - id: Unique card identifier (e.g., 'dp3-3', 'base6-3').
+        - name: Pokemon name.
+        - rarity: Card rarity (Rare Holo, Rare, Uncommon).
+        - collection: Set name (e.g., Secret Wonders, Emerald).
+        - series: Card series (Diamond & Pearl, EX, Base).
+        - holofoil_price: Market price for holofoil version.
+        - reverse_holofoil_price: Market price for reverse holofoil version.
+        - release_date: Card release date (YYYY/MM/DD).
+        - images_url: URL of the large card image.
         
     Example:
         >>> df = update_pokemon_cardsultimate()
@@ -159,40 +166,86 @@ class PokemonCardDatabase:
         Fichier principal : pokemon_cards.csv
         Copie de sauvegarde : pokemon_cards_20240302_1430.csv
     """
-        
-        
         new_df = self.api_handler.import_data()
-        new_df_cleaned = self.api_handler.filter_cards(new_df)
         
+        new_df_cleaned = self.api_handler.filter_cards(new_df)
         try:
             if os.path.isfile(csv_path):
                 old_df = pd.read_csv(csv_path)
                 
-                for idx, row in tqdm(old_df.iterrows(), total=len(old_df), desc="Updating prices"):
+                for idx, row in tqdm(old_df.iterrows(), total=len(old_df), desc="Updating existing cards"):
                     card_id = row['id']
                     if card_id in new_df_cleaned['id'].values:
-                        new_prices = new_df_cleaned[new_df_cleaned['id'] == card_id].iloc[0]
-                        old_df.at[idx, 'holofoil_price'] = new_prices['holofoil_price']
-                        old_df.at[idx, 'reverse_holofoil_price'] = new_prices['reverse_holofoil_price']
+                        updated_card = new_df_cleaned[new_df_cleaned['id'] == card_id].iloc[0]
+                        old_df.at[idx, 'holofoil_price'] = updated_card['holofoil_price']
+                        old_df.at[idx, 'reverse_holofoil_price'] = updated_card['reverse_holofoil_price']
+                        old_df.at[idx, 'images_url'] = updated_card['images_url']
                 
                 new_cards = new_df_cleaned[~new_df_cleaned['id'].isin(old_df['id'])]
                 updated_df = pd.concat([old_df, new_cards], ignore_index=True)
+            
             else:
                 updated_df = new_df_cleaned
+            updated_df = self.add_popularity_rank(updated_df, popularity_csv)
             
             self._save_database(updated_df, csv_path)
+            print(f"Database updated successfully with {len(updated_df)} cards.")
             return updated_df
-            
+        
         except Exception as e:
             print(f"Error updating database: {e}")
             return None
-
+        
+        
     def _save_database(self, df, csv_path):
         """Saves the database with a timestamped backup"""
         if os.path.exists(csv_path):
             os.remove(csv_path)
-        #timestamp = datetime.now().strftime('%Y%m%d_%H%M')
         backup_path = f'pokemon_cards.csv'
         
         for file_path in tqdm([csv_path, backup_path], desc="Saving files"):
             df.to_csv(file_path, index=False, encoding='utf-8', float_format='%.2f')
+
+
+
+
+    def add_popularity_rank(self, df, popularity_csv):
+            """
+            Adds a popularity rank column to the Pokémon card DataFrame based on external popularity data.
+            Args:
+                df (pandas.DataFrame): DataFrame containing Pokémon card data.
+                popularity_csv (str): Path to the CSV file containing Pokémon popularity data.
+
+            Returns:
+                pandas.DataFrame: Updated DataFrame with a 'popularity_rank' column.
+            """
+            
+            pokemon_popularity = pd.read_csv(popularity_csv)
+            
+            pokemon_popularity['en'] = pokemon_popularity['en'].astype(str)
+            
+            popularity_dict = dict(zip(pokemon_popularity['en'], pokemon_popularity['Classement']))
+            
+            def get_popularity_rank(card_name):
+                """
+                Determines the popularity rank of a Pokémon based on its card name.
+
+                Args:
+                    card_name (str): Name of the Pokémon card.
+
+                Returns:
+                    str: Popularity rank or 'Not Referenced' if not found.
+                """
+                if not isinstance(card_name, str):
+                    return 'Not Referenced'
+                
+                for pokemon_name, rank in popularity_dict.items():
+                    if pokemon_name == 'nan':
+                        continue
+                    if pokemon_name in card_name:
+                        return rank
+                return 'Not Referenced'
+
+            df['popularity_rank'] = df['name'].apply(get_popularity_rank)
+            
+            return df
