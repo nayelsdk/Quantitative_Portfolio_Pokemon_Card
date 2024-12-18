@@ -1,4 +1,5 @@
 # Afficher un graphique
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -8,46 +9,64 @@ import ast
 import os
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import random
 
-st.title("Sélecteur de montant d'argent 💰")
 
-# Ajouter une description
-st.sidebar.title("Paramètres")
+st.title("Investment Portfolio Pokemon Card")
 
-# Slider pour sélectionner un montant
-montant = st.sidebar.slider(
-    "Choisissez le montant (en euros)",  # Étiquette du slider
-    min_value=0,  # Valeur minimale
-    max_value=1000,  # Valeur maximale
-    value=100,  # Valeur initiale
-    step=10,  # Incrément
+# Sidebar Title
+st.sidebar.title("Parameters")
+
+# Slider for amount
+amount = st.sidebar.slider(
+    "Choose the amount you want to invest",  # Name of the slider
+    min_value=0,  
+    max_value=1000, 
+    value=100,  # Initial value
+    step=10,  # Increment
 )
-# Afficher le montant sélectionné
-st.write(f"Vous avez choisi de mettre **{montant} €**.")
+# Print the real amount
+st.write(f"Amount you need to invest **{amount} €**.")
 
-# Slider pour sélectionner un nombre de cartes
-carte = st.sidebar.slider(
-    "Choisissez le nombre de cartes",  # Étiquette du slider
-    min_value=0,  # Valeur minimale
-    max_value=249,  # Valeur maximale
-    value=100,  # Valeur initiale
-    step=1,  # Incrément
-)
+st.markdown(f"""
+    <style>
+        body {{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* Prend toute la hauteur de la fenêtre */
+            margin: 0;
+            background-color: #f7f7f7; /* Couleur de fond de la page */
+        }}
+        .carre {{
+            width: 300px;
+            height: 100px;
+            background-color: #487617; /* Couleur du carré */
+            color: white; /* Couleur du texte */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 10px; /* Coins arrondis */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Ombre du carré */
+        }}
+    </style>
+    <div class="carre">
+        {amount}€
+    </div>
+""", unsafe_allow_html=True)
 
-# Sélection du niveau de risque
-aversion_risque = st.sidebar.radio(
-    "Quelle est votre aversion au risque ?",  # Étiquette
-    options=["Faible", "Moyenne", "Élevée"],  # Options disponibles
-    index=1  # Option par défaut
-)
-nombre1 = st.sidebar.number_input("Entrez le premier nombre", value=0)
-nombre2 = st.sidebar.number_input("Entrez le deuxième nombre", value=0)
+# # Slider for the expectation
+# expectation = st.sidebar.slider(
+#     "Expectation",  # Étiquette du slider
+#     min_value=0,  # Valeur minimale
+#     max_value=100,  # Valeur maximale
+#     value=10,  # Valeur initiale
+#     step=1,  # Incrément
+# )
 
-# Description principale
-st.write(f"Vous avez choisi une aversion au risque : **{aversion_risque}**.")
-
-
-
+# st.write(f"Expectation chosen is **{expectation} %**.")
 
 
 
@@ -72,10 +91,6 @@ def get_file_paths(directory):
             file_paths.append(os.path.join(root, file))
     return file_paths
 
-L=get_file_paths('price_history')
-a=pd.read_csv(L[nombre1])
-c=pd.read_csv(L[nombre2])
-
 
 def prepare_card_data(df):
     """Prépare les données des cartes pour l'optimisation"""
@@ -92,9 +107,34 @@ def prepare_card_data(df):
     return processed_data
 
 
-b=prepare_card_data(a)
 
+import random
 
+def generate_random_color():
+    """Génère une couleur aléatoire au format hexadécimal."""
+    return f'#{random.randint(0, 0xFFFFFF):06x}'
+
+def generate_distinct_colors(num_colors):
+    """Génère une liste de couleurs distinctes."""
+    colors = []
+    for _ in range(num_colors):
+        while True:
+            new_color = generate_random_color()
+            # Vérifier si la couleur est suffisamment différente des autres
+            if not any(is_similar(new_color, color) for color in colors):
+                colors.append(new_color)
+                break
+    return colors
+
+def is_similar(color1, color2, threshold=50):
+    """Retourne True si deux couleurs sont trop similaires (sur une échelle de 0 à 255 pour chaque canal RGB)."""
+    # Convertir la couleur hexadécimale en RGB
+    color1_rgb = tuple(int(color1[i:i+2], 16) for i in (1, 3, 5))
+    color2_rgb = tuple(int(color2[i:i+2], 16) for i in (1, 3, 5))
+    
+    # Calculer la différence euclidienne entre les deux couleurs dans l'espace RGB
+    diff = sum((c1 - c2) ** 2 for c1, c2 in zip(color1_rgb, color2_rgb)) ** 0.5
+    return diff < threshold
 
 
 #affichage
@@ -108,7 +148,7 @@ def create_elegant_pokemon_chart(dataframes, labels):
     )
     
     # Couleurs élégantes
-    colors = ['#2E3F6E', '#A63A50']  # Bleu nuit et Bordeaux
+    colors = generate_distinct_colors(len(dataframes))  # Bleu nuit et Bordeaux
     
     # Ajouter les rendements pour chaque carte
     for i, (df, label) in enumerate(zip(dataframes, labels)):
@@ -213,37 +253,26 @@ def create_elegant_pokemon_chart(dataframes, labels):
 def calculate_log_returns(df):
     df['log_return'] = np.log(df['price'] / df['price'].shift(1))
     return df
+n=5
+L=get_file_paths('price_history')
+dataframes = []
+labels = [f"Carte {i+1}" for i in range(n)]
 
-xy8_22 = calculate_log_returns(a)
-ex1_4 = calculate_log_returns(c)
+selected_cards = random.sample(L, n)
+for file in selected_cards:
+    df = pd.read_csv(file)
+    df = calculate_log_returns(df)
+    dataframes.append(df)
 
-# # Tracer les rendements interactifs
-fig = create_elegant_pokemon_chart([xy8_22, ex1_4], ['xy8-22', 'ex1-4'])
+print(len(labels))
+print(len(dataframes))
+# Création et affichage du graphique
+# Tracer les rendements interactifs
+fig = create_elegant_pokemon_chart(dataframes, labels)
 
 #fonction compatible avec plotly
 st.plotly_chart(fig)
 
-
-
-
-
-
-# Génération de données en fonction du risque
-if aversion_risque == "Faible":
-    # Courbe pour les preneurs de risques (faible aversion)
-    x = np.linspace(0, 10, 100)
-    y = np.sin(x) * np.exp(0.1 * x)  # Courbe croissante avec oscillations
-elif aversion_risque == "Moyenne":
-    # Courbe pour un équilibre entre risque et sécurité
-    x = np.linspace(0, 10, 100)
-    y = np.log(x + 1) * 5  # Croissance logarhythmique
-else:
-    # Courbe pour les aversions élevées (sécurité avant tout)
-    x = np.linspace(0, 10, 100)
-    y = 5 + np.cos(x)  # Ligne stable avec de petites oscillations
-
-# Affichage du graphique
-st.line_chart(pd.DataFrame({"x": x, "y": y}).set_index("x"))
 
 # #afficher une image
 # # URL de l'image Pokémon et lien cible
@@ -264,21 +293,30 @@ st.line_chart(pd.DataFrame({"x": x, "y": y}).set_index("x"))
 # st.write("Cliquez sur la carte Pokémon pour explorer plus de détails !")
 
 
-st.image("https://images.pokemontcg.io/dp3/1.png")
+# st.image("https://images.pokemontcg.io/dp3/1.png")
 
 # Add a dataframe
 
 df = pd.read_csv("streamlit/dfstreamlit.csv")
 df1 = pd.DataFrame(df['images'])
 df1['images'] = df1['images'].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
-df1['images2'] = df1['images'].apply(lambda x: list(x.values())[0])
-df1['images3'] =df1['images2'].apply(lambda x: f'<img src="{x}" width="60">')
+df1['images'] = df1['images'].apply(lambda x: list(x.values())[0])
+df1['images'] = df1['images'].apply(lambda x: f'<img src="{x}" width="60">')
+df1['Nom'] = df['name']
+df1['id'] = df['id']
+df1['date achat'] = None
+df1['date vente'] = None
+df1['prix achat'] = None
+df1['prix vente'] = None
+df1['benefice'] = None
+# df1.drop(columns=["images", "images2"], inplace=True)
 
-
+new_order = ['id','Nom','images','date achat', 'date vente', 'prix achat', 'prix vente', 'benefice']
+df1 = df1[new_order]
 
 pd.set_option('display.max_colwidth', None)
 
-st.write(df1.head(carte).to_html(escape=False), unsafe_allow_html=True)
+st.write(df1.head(10).to_html(escape=False), unsafe_allow_html=True)
 
 # st.dataframe(HTML(df.to_html(escape=False ,formatters=format_dict)))
 
