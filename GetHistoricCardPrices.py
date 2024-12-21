@@ -317,7 +317,7 @@ def extract_price_history(html_content, card_state):
 
 
 
-def save_historic_prices(cards_df, output_dir='price_history'):
+def save_historic_prices(cards_df, output_dir='datas/price_history'):
     """
     Extracts and saves price history data for multiple Pokemon cards with progress tracking.
     

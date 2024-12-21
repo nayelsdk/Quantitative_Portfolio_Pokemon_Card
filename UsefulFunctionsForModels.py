@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import numpy as np
+import glob
 
 def get_file_paths(directory):
     """
@@ -59,45 +60,8 @@ def get_mean_return_card (df):
     mean_return=np.mean(log_returns)
     return round(mean_return,4)
 
-def sigmoid_discrete(x, k, x0):
-    """
-    Computes a sigmoid function for a given input for a fiability rate for each card.
 
-    Args:
-        x (float): The input value.
-        k (float): The steepness of the curve.
-        x0 (float): The midpoint of the sigmoid curve.
-
-    Returns:
-        float: The sigmoid value for the input x.
-
-    Formula:
-        sigmoid(x) = 1 / (1 + exp(-k * (x - x0)))
-    """
-    return 1 / (1 + np.exp(-k * (x - x0)))
-
-
-
-def get_fiability_card(df):
-    """
-    Calculates a "fiability" score for a card based on sales quantity using a sigmoid function.
-
-    Args:
-        df (pd.DataFrame): A DataFrame containing sales data with a column 'quantity_sold'.
-
-    Returns:
-        float: The fiability score.
-    """
-    try:
-        sum_sales_card = np.sum(df["quantity_sold"])
-        fiability=sigmoid_discrete(sum_sales_card,k=0.3, x0=15)
-    except Exception as e:
-        print(f"Error processing {df}: {e}")
-    return fiability
-
-
-
-def get_dataframe_cards_matrix(folder_path):
+def get_dataframe_cards_matrix(folder_path="datas/price_history"):
     """
     Generates a DataFrame summarizing all the information we need to compute the Markowitz model
 
@@ -109,35 +73,38 @@ def get_dataframe_cards_matrix(folder_path):
             - card_id: Card identifier derived from file names.
             - last_price: Last recorded price of each card.
             - mean_return: Mean logarithmic return of each card's prices.
-            - fiability: Fiability score based on sales data and sigmoid function.
-            - fiability_dot_return: Product of fiability and mean return.
+            - Quantity Sold : Sum of the quantity sold over the past year.
 
     Example:
         >>> cards_df = get_dataframe_cards_matrix("path/to/folder")
         >>> print(cards_df.head())
     """
- 
-    list_paths=get_file_paths(folder_path)
+    
+    # Use os.walk to get all file paths including subdirectories
+    list_paths = []
+    for root, dirs, files in os.walk(folder_path):
+        for file in files:
+            if file.endswith('.csv'):
+                list_paths.append(os.path.join(root, file))
+
     dataframe_cards = {
         "card_id": [],
         "last_price": [],
         "mean_return": [],
-        "fiability": [],
-        "fiability_dot_return": []
+        "Quantity Sold": [],
     }   
     try:
         for path in list_paths:
-            df=pd.read_csv(path)
-            card_id = path.split('/')[-1].replace('.csv', '')
-            last_price=get_last_price(df)
-            mean_return=get_mean_return_card(df)*100
-            fiability=get_fiability_card(df)
+            df = pd.read_csv(path)
+            card_id = os.path.basename(path).replace('.csv', '')
+            last_price = get_last_price(df)
+            mean_return = get_mean_return_card(df) * 100
+            sum_sales = np.sum(df["quantity_sold"])
             
             dataframe_cards["card_id"].append(card_id)
             dataframe_cards["last_price"].append(last_price)
             dataframe_cards["mean_return"].append(mean_return)
-            dataframe_cards["fiability"].append(fiability)
-            dataframe_cards["fiability_dot_return"].append(fiability*mean_return)
+            dataframe_cards["Quantity Sold"].append(sum_sales)
             
     except Exception as e:
         print(f"Error reading card {card_id}: {e}")
@@ -146,40 +113,41 @@ def get_dataframe_cards_matrix(folder_path):
         
 
 
-def calculate_covariance_matrix(cards_df,folder_path = 'pokemon_cards'):
+def calculate_covariance_matrix(cards_df,folder_path = 'datas/price_history'):
     """
     Computes the covariance matrix of card prices across multiple cards.
 
     Args:
         cards_df (pd.DataFrame): A DataFrame containing card IDs and related statistics.
-        folder_path (str, optional): Path to the folder containing CSV files for each card. Default is 'pokemon_cards'.
+        folder_path (str): Path to the folder containing CSV files for each card.
 
     Returns:
-        pd.DataFrame: Covariance matrix of prices for all cards. Returns an empty DataFrame if no prices are available.
-
-    Notes:
-        - Each card's CSV file must include columns such as 'price', and optionally, date columns ('start_date', 'end_date') for proper parsing.
-        - Handles missing files or errors gracefully by printing error messages without interrupting execution.
+        pd.DataFrame: Covariance matrix of prices for all cards.
     """
     cards_prices = {}
     
     for _, row in cards_df.iterrows():
-        file_path = os.path.join(folder_path, f'{row["card_id"]}.csv')
+        card_id = row["card_id"]
+        found = False
         
-        try:
-            df = pd.read_csv(file_path)
+        for subdir in ['low_sales', 'medium_sales', 'high_sales']:
+            file_path = os.path.join(folder_path, subdir, f'{card_id}.csv')
+            matching_files = glob.glob(file_path)
             
-            df['start_date'] = pd.to_datetime(df['start_date'])
-            df['end_date'] = pd.to_datetime(df['end_date'])
-            
-            prices = df['price'].tolist()
-            
-            cards_prices[row["card_id"]] = prices
-            
-        except FileNotFoundError:
-            print(f"Fichier non trouvé pour {row['card_id']}")
-        except Exception as e:
-            print(f"Erreur lors du traitement de {row['card_id']}: {e}")
+            if matching_files:
+                try:
+                    df = pd.read_csv(matching_files[0])
+                    df['start_date'] = pd.to_datetime(df['start_date'])
+                    df['end_date'] = pd.to_datetime(df['end_date'])
+                    prices = df['price'].tolist()
+                    cards_prices[card_id] = prices
+                    found = True
+                    break
+                except Exception as e:
+                    print(f"Erreur lors du traitement de {card_id}: {e}")
+        
+        if not found:
+            print(f"Fichier non trouvé pour {card_id}")
     
     if cards_prices:
         price_df = pd.DataFrame(cards_prices)
@@ -187,6 +155,33 @@ def calculate_covariance_matrix(cards_df,folder_path = 'pokemon_cards'):
         return covariance_matrix
     else:
         return pd.DataFrame()
+
+
+def select_mixed_cards(filtered_df, N):
+    """
+    Selects N cards: half by descending price, half randomly
+    
+    Args:
+        filtered_df: DataFrame containing card information
+        N: Total number of cards to select
+        
+    Returns:
+        DataFrame with selected cards
+    """
+    n_price_select = N // 2
+    
+    price_sorted_df = filtered_df.nlargest(n_price_select, 'last_price')
+    
+    remaining_df = filtered_df[~filtered_df.index.isin(price_sorted_df.index)]
+    n_random_select = min(N - n_price_select, len(remaining_df))
+    
+    if n_random_select > 0:
+        random_df = remaining_df.sample(n=n_random_select, random_state=42)
+        result_df = pd.concat([price_sorted_df, random_df])
+    else:
+        result_df = price_sorted_df
+        
+    return result_df
 
 
     

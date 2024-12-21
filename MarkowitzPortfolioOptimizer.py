@@ -1,36 +1,86 @@
-import os
 import pandas as pd
 import numpy as np
-from UsefulFunctionsForModels import calculate_covariance_matrix
+from typing import Dict
+from dataclasses import dataclass
+from UsefulFunctionsForModels import select_mixed_cards, calculate_covariance_matrix, get_dataframe_cards_matrix
 from scipy.optimize import minimize
-
-path='price_history/high_sales'
-class MarkowitzOptimizer:
-    def __init__(self, amount_to_invest, dataframe_cards_info):
-        self.amount_to_invest = amount_to_invest
-        self.dataframe_cards_info = dataframe_cards_info
+@dataclass
+class SigmoidParameters:
+    MAX_K: float = 1
+    MIN_K: float = 0.1
     
-    def get_optimized_return_mean_matrix_fiability(self, threshold=0.01, ratio=0.40):
-        filtered_df = self.dataframe_cards_info[
-            (self.dataframe_cards_info["fiability_dot_return"] > threshold) & 
-            (self.dataframe_cards_info['last_price'] < ratio * self.amount_to_invest)
+    MAX_X0: float = 300
+    MIN_X0: float = 10
+
+class MarkowitzOptimizer:
+    def __init__(self, 
+                 amount_to_invest: float, 
+                 critical_sales_threshold: float, 
+                 sales_volume_sensitivity: float,
+                dataframe_cards_info: pd.DataFrame = get_dataframe_cards_matrix()):
+        """
+        Initialize the Markowitz Optimizer
+        
+        Args:
+            amount_to_invest: Total investment amount
+            dataframe_cards_info: DataFrame containing card information
+            critical_sales_threshold: Threshold for sales (x0)
+            sales_volume_sensitivity: Sensitivity parameter (k)
+        """
+        self.amount_to_invest = amount_to_invest
+        self.df = dataframe_cards_info[['card_id', 'last_price', 'mean_return', 'Quantity Sold']].copy()        
+        self.critical_sales_threshold = critical_sales_threshold
+        self.sales_volume_sensitivity = sales_volume_sensitivity
+        self.params = SigmoidParameters()
+    
+    @staticmethod
+    def sigmoid(x: np.ndarray, x0: float, k: float) -> np.ndarray:
+        """Calculate sigmoid function values"""
+        return 1 / (1 + np.exp(-k * (x - x0)))
+    
+    def calculate_parameters(self) -> Dict[str, float]:
+        """Calculate k and x0 parameters based on sensitivity"""
+        k = (self.params.MAX_K - self.params.MIN_K) * self.sales_volume_sensitivity + self.params.MIN_K
+        x0 = (self.params.MAX_X0 - self.params.MIN_X0) * self.critical_sales_threshold + self.params.MIN_X0
+        return {"k": k, "x0": x0}
+    
+    def add_fiability_metrics(self) -> pd.DataFrame:
+        """Add fiability metrics to the dataframe"""
+        params = self.calculate_parameters()
+        
+        self.df['Fiability'] = self.sigmoid(self.df['Quantity Sold'].values, params['x0'], params['k'])
+        self.df['Fiability']=round(self.df['Fiability'],3)
+        self.df['Return x Fiability'] = round(self.df['Fiability'] * self.df['mean_return'],3)
+        return self.df
+
+
+    def get_optimized_return_mean_matrix_fiability(self, threshold=0.01, ratio=0.5, N=30):
+        """
+        Filter the DataFrame according to the given criterias and limits the dataframe with N to reduce time complexity of the Markowitz model
+        """
+        self.df=self.add_fiability_metrics()
+        filtered_df = self.df[
+            (self.df['Return x Fiability'] > threshold) & 
+            (self.df['last_price'] < ratio * self.amount_to_invest)
         ]
+        
+        if len(filtered_df) > N:
+            filtered_df = select_mixed_cards(filtered_df, N)
         return filtered_df
+
 
     def objective_weights(self, weights):
         filtered_df = self.get_optimized_return_mean_matrix_fiability()
-        covariance_filtered_cards = calculate_covariance_matrix(filtered_df,path)
+        covariance_filtered_cards = calculate_covariance_matrix(filtered_df)
         return np.dot(weights.T, np.dot(covariance_filtered_cards, weights))
     
     def set_constraints(self):
         filtered_df = self.get_optimized_return_mean_matrix_fiability()
-        mean_matrix = filtered_df["fiability_dot_return"].values  # Convertir en array numpy
+        mean_matrix = filtered_df["Return x Fiability"].values
         n_cards = len(mean_matrix)
                 
         constraints = [
             {'type': 'eq', 'fun': lambda x: np.sum(x) - 1}
-            #{'type': 'ineq', 'fun': lambda x: np.dot(x, mean_matrix) - 0.9 * self.hope_return},  
-            #{'type': 'ineq', 'fun': lambda x: 1.1 * self.hope_return - np.dot(x, mean_matrix)}  
         ]
         
         bounds = tuple((0, 1) for _ in range(n_cards))
@@ -41,7 +91,7 @@ class MarkowitzOptimizer:
         n_cards = len(filtered_df)
         
         if n_cards == 0:
-            raise ValueError("Aucune carte ne correspond aux critères de filtrage")
+            raise ValueError("No cards correspond to the filter criterias")
         
         constraints, bounds = self.set_constraints()
         initial_weights = np.array([1/n_cards] * n_cards)
@@ -79,6 +129,27 @@ class MarkowitzOptimizer:
         
         binary_selection = np.zeros(len(weights))
         binary_selection[selected_indices] = 1
-        mean_return= np.mean(df.iloc[selected_indices]["fiability_dot_return"])
+        mean_return= np.mean(df.iloc[selected_indices]["Return x Fiability"])
         
-        return total_investment,  mean_return, df.iloc[selected_indices]
+        return round(total_investment,2),  round(mean_return,3), df.iloc[selected_indices]
+    
+    
+        
+    def get_streamlit_database_markowitz(self, path_database="datas/pokemon_cards.csv"):
+        pokemon_cards_df=pd.read_csv(path_database)
+        total_investment, mean_return, df = self.optimize_cards_sell()
+        df['base_id'] = df['card_id'].str.split('_').str[0]
+        
+        pokemon_info = pokemon_cards_df[['id', 'name', 'rarity', 'collection', 'release_date', 'images_url']]
+        
+        result_df = pd.merge(
+            df[['base_id', 'last_price']],
+            pokemon_info,
+            left_on='base_id',
+            right_on='id',
+            how='left'
+        )
+        
+        return total_investment, mean_return, result_df[['id', 'name', 'rarity', 'last_price', 'collection', 'release_date', 'images_url']]
+
+            

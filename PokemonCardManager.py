@@ -128,8 +128,9 @@ class PokemonCardDatabase:
     """Class to handle Pokemon card database operations"""
     def __init__(self, api_handler: PokemonCardAPI):
         self.api_handler = api_handler
+        self.data_dir = 'datas' 
 
-    def update_database(self, csv_path='pokemon_cards.csv', popularity_csv="pokemon_data_popularity.csv"):
+    def update_database(self, csv_filename='pokemon_cards.csv', popularity_csv_filemane="pokemon_data_popularity.csv"):
         """
     Creates or updates the Pokemon cards CSV file with current market prices.
     
@@ -166,6 +167,10 @@ class PokemonCardDatabase:
         Fichier principal : pokemon_cards.csv
         Copie de sauvegarde : pokemon_cards_20240302_1430.csv
     """
+        csv_path = os.path.join(self.data_dir, csv_filename)
+        popularity_csv_path = os.path.join(self.data_dir, popularity_csv_filemane)
+        os.makedirs(self.data_dir, exist_ok=True)
+
         new_df = self.api_handler.import_data()
         
         new_df_cleaned = self.api_handler.filter_cards(new_df)
@@ -186,9 +191,9 @@ class PokemonCardDatabase:
             
             else:
                 updated_df = new_df_cleaned
-            updated_df = self.add_popularity_rank(updated_df, popularity_csv)
-            
-            self._save_database(updated_df, csv_path)
+            updated_df = self.add_popularity_rank(updated_df, popularity_csv_path)
+
+            self.save_database(updated_df, csv_path)
             print(f"Database updated successfully with {len(updated_df)} cards.")
             return updated_df
         
@@ -197,11 +202,11 @@ class PokemonCardDatabase:
             return None
         
         
-    def _save_database(self, df, csv_path):
-        """Saves the database with a timestamped backup"""
+    def save_database(self, df, csv_path):
+        """Saves the database"""
         if os.path.exists(csv_path):
             os.remove(csv_path)
-        backup_path = f'pokemon_cards.csv'
+        backup_path = os.path.join(self.data_dir, 'pokemon_cards.csv')
         
         for file_path in tqdm([csv_path, backup_path], desc="Saving files"):
             df.to_csv(file_path, index=False, encoding='utf-8', float_format='%.2f')
