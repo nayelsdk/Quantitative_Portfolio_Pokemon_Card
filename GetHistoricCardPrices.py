@@ -405,7 +405,7 @@ def save_historic_prices(cards_df, output_dir='datas/price_history'):
             time.sleep(1)
 
 
-def load_failed_ids(file_path='failed_ids.txt'):
+def load_failed_ids(file_path='datas/failed_ids.txt'):
     """Load the IDs that failed from a txt file"""
     try:
         with open(file_path, 'r') as f:
@@ -413,7 +413,7 @@ def load_failed_ids(file_path='failed_ids.txt'):
     except FileNotFoundError:
         return set()
 
-def save_failed_id(card_id, file_path='failed_ids.txt'):
+def save_failed_id(card_id, file_path='datas/failed_ids.txt'):
     """Add a new ID that that faild to the txt file"""
     with open(file_path, 'a') as f:
         f.write(f"{card_id}\n")

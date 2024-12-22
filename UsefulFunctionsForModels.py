@@ -92,6 +92,7 @@ def get_dataframe_cards_matrix(folder_path="datas/price_history"):
         "last_price": [],
         "mean_return": [],
         "Quantity Sold": [],
+        "Card Info": []
     }   
     try:
         for path in list_paths:
@@ -105,6 +106,7 @@ def get_dataframe_cards_matrix(folder_path="datas/price_history"):
             dataframe_cards["last_price"].append(last_price)
             dataframe_cards["mean_return"].append(mean_return)
             dataframe_cards["Quantity Sold"].append(sum_sales)
+            dataframe_cards["Card Info"].append(df)
             
     except Exception as e:
         print(f"Error reading card {card_id}: {e}")

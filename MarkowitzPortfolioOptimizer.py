@@ -28,7 +28,7 @@ class MarkowitzOptimizer:
             sales_volume_sensitivity: Sensitivity parameter (k)
         """
         self.amount_to_invest = amount_to_invest
-        self.df = dataframe_cards_info[['card_id', 'last_price', 'mean_return', 'Quantity Sold']].copy()        
+        self.df = dataframe_cards_info[['card_id', 'last_price', 'mean_return', 'Quantity Sold', 'Card Info']].copy()        
         self.critical_sales_threshold = critical_sales_threshold
         self.sales_volume_sensitivity = sales_volume_sensitivity
         self.params = SigmoidParameters()
@@ -133,8 +133,6 @@ class MarkowitzOptimizer:
         
         return round(total_investment,2),  round(mean_return,3), df.iloc[selected_indices]
     
-    
-        
     def get_streamlit_database_markowitz(self, path_database="datas/pokemon_cards.csv"):
         pokemon_cards_df=pd.read_csv(path_database)
         total_investment, mean_return, df = self.optimize_cards_sell()
@@ -143,13 +141,13 @@ class MarkowitzOptimizer:
         pokemon_info = pokemon_cards_df[['id', 'name', 'rarity', 'collection', 'release_date', 'images_url']]
         
         result_df = pd.merge(
-            df[['base_id', 'last_price']],
+            df[['base_id', 'last_price',"Fiability", "Return x Fiability", "Card Info"]],
             pokemon_info,
             left_on='base_id',
             right_on='id',
             how='left'
         )
         
-        return total_investment, mean_return, result_df[['id', 'name', 'rarity', 'last_price', 'collection', 'release_date', 'images_url']]
+        return total_investment, mean_return, result_df[['id', 'name', 'rarity', 'last_price',"Fiability", "Return x Fiability", 'collection', 'release_date', 'images_url', "Card Info"]]
 
             
