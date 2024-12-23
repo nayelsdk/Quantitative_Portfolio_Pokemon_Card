@@ -1,8 +1,12 @@
-# Pokémon Card Investment Portfolio 🃏
+# Pokemon Card Investment Portfolio 🃏
 
-This project aims to create a robust investment portfolio for Pokémon cards by leveraging historical price trends and advanced financial modeling. The ultimate goal is to help investors make informed decisions about buying and selling Pokémon cards, maximizing returns while managing risk.
+With the emergence of the new Pokemon App and the growing popularity of the franchise, Pokemon has reached its peak in 2024. The latest card collections have become increasingly expensive, as many people seek to profit from collecting them, turning these cards into genuine investment assets.
+This project aims to create an investment portfolio for Pokémon cards by leveraging historical price trends and financial modeling. The main objective is to execute all key steps of a data science project, from data scraping and analysis to statistical modelling, culminating in the visualisation and presentation of results.
 
-Complete explanation of the project will be uploaded on the 29th of December, 2024. For the moment, the files are not ordered.
+Here is the structure of the project : 
+
+
+
 
 
 
