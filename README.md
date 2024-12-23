@@ -1,4 +1,3 @@
-
 ![Logo](https://assetsio.gnwcdn.com/Pokemon-TCG-classic_r9oJvXn.jpg?width=1920&height=1920&fit=bounds&quality=80&format=jpg&auto=webp)
 
 # Pokemon Card Investment Portfolio 🃏
@@ -70,7 +69,55 @@ The extraction process was conducted using **BeautifulSoup** and **Selenium**, a
 
 Note: Each card takes approximately 1 minute and 30 seconds to extract. If you plan to run the code, be prepared to allocate sufficient time. ⏳ ☠️
 ##  Data Analysis & Statistics 🔎
+
+
 ## Portfolio Optimization with Markowitz Model 🧠
 
+For portfolio modeling, it was preferable to first implement a constrained minimization model inspired by Markowitz's framework.  
 
+We have approximately 3600 extracted cards. The goal is to create a portfolio of 5 to 35 Pokémon cards for an investor based on their investment amount \(M\), risk aversion \(r\), and risk sensitivity \(s_r\).  
+
+Each card is assigned its average annual logarithmic return and a reliability score, which will be explained later.  
+
+### Logarithmic Return Formula  
+The logarithmic return is calculated as:  
+\[
+R_t = \log\left(\frac{P_t}{P_{t-1}}\right)
+\]  
+
+The average logarithmic return is then defined as:  
+\[
+R_{\text{mean}} = \frac{1}{T} \sum_{t=1}^{T} R_t
+\]  
+
+Where:  
+- \(R_{\text{mean}}\) is the mean logarithmic return.  
+- \(T\) is the number of logarithmic returns for the card.  
+- \(R_t\) represents the logarithmic return at iteration \(t\).  
+
+### Reliability Score  
+In addition to the mean return, the reliability score for each card is defined as:  
+\[
+F = \frac{1}{1 - \exp\left(-s_r(x - r)\right)}  
+\]  
+
+Where:  
+- \(s_r\) is the risk sensitivity parameter, a value between 0 and 1:  
+  - If \(s_r = 0\), the curve is very smooth, indicating low sensitivity to risk.  
+  - If \(s_r = 1\), the curve becomes steep, indicating high risk aversion.  
+- \(r\) is the risk aversion parameter, also a value between 0 and 1:  
+  - If \(r = 0\), less frequently traded cards are considered.  
+  - If \(r = 1\), only highly traded cards are considered.  
+
+### Why Use the Sigmoid Function?  
+To justify the use of the sigmoid function, here is a graph illustrating how reliability scores vary with different parameters:  
+![Fiability Score with different parameters](images/sigmoid.png)
+
+ 
+
+## Authors
+
+- [Benabdesadok Nayel](https://www.github.com/octokatherine)
+- [Kefi Wassim](https://www.github.com/octokatherine)
+- [Ren Alexandre](https://www.github.com/octokatherine)
 
