@@ -81,6 +81,7 @@ Each card is assigned its average annual logarithmic return and a reliability sc
 
 ### Logarithmic Return Formula  
 The logarithmic return is calculated as:  
+- $\sqrt{x}$
 $$
 R_t = \log\left(\frac{P_t}{P_{t-1}}\right)
 $$  
