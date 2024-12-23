@@ -81,14 +81,14 @@ Each card is assigned its average annual logarithmic return and a reliability sc
 
 ### Logarithmic Return Formula  
 The logarithmic return is calculated as:  
-\[
+$$
 R_t = \log\left(\frac{P_t}{P_{t-1}}\right)
-\]  
+$$  
 
 The average logarithmic return is then defined as:  
-\[
+$$
 R_{\text{mean}} = \frac{1}{T} \sum_{t=1}^{T} R_t
-\]  
+$$  
 
 Where:  
 - \(R_{\text{mean}}\) is the mean logarithmic return.  
@@ -97,9 +97,9 @@ Where:
 
 ### Reliability Score  
 In addition to the mean return, the reliability score for each card is defined as:  
-\[
+$$
 F = \frac{1}{1 - \exp\left(-s_r(x - r)\right)}  
-\]  
+$$  
 
 Where:  
 - \(s_r\) is the risk sensitivity parameter, a value between 0 and 1:  
