@@ -58,13 +58,16 @@ if st.sidebar.button("Run"):
 
     amount_invested, mean_return, portfolio=markowitz.get_streamlit_database_markowitz()
 
+    n = len(portfolio)
 
     st.subheader("Quick Metrics")
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
         st.metric(label="Amount to Invest (€)", value=f"{amount_invested}")
     with col2:
         st.metric(label="Mean Return (%)", value=f"{mean_return * 100:.2f}")
+    with col3:
+        st.metric(label="Number of Cards to buy", value = f"{n}")
 
     ##############################################################################################
     #Plot
@@ -88,16 +91,29 @@ if st.sidebar.button("Run"):
     portfolio_plot = portfolio.drop(columns = ['Card Info','id'])
 
     #Renaming and reorder
+    portfolio_plot = portfolio_plot.rename(columns = {
+        'name': 'Card Name',
+        'rarity': 'Rarity',
+        'last_price': 'Price',
+        'Fiability': 'Reliability Score',
+        'Return x Fiability': 'Return',
+        'collection': 'Set Name',
+        'release_date': 'Release Date',
+        'images_url':'Image + URL'
+    })
+    portfolio_plot = portfolio_plot[['Image + URL', 'Card Name', 'Rarity', 'Price', 'Reliability Score', 'Return', 'Set Name', 'Release Date']]
 
+    portfolio_plot.reset_index(drop = True, inplace = True)
 
     ##Styling the dataframe
     #Truncate and adding symbol
     portfolio_plot = portfolio_plot.style.format({
-        'last_price': "{:.2f}€",
-        'Fiability': "{:.2%}",
-        'Return x Fiability' : "{:.2%}"
+        'Price': "{:.2f}€",
+        'Reliability Score': "{:.2%}",
+        'Return' : "{:.2%}"
     })
-
+    
+    #Center the text + convert to html
     portfolio_plot = portfolio_plot.set_table_styles(
         [{
             'selector': 'table',
@@ -110,7 +126,7 @@ if st.sidebar.button("Run"):
     }
     ]).set_table_attributes('style="width: 100%; border-collapse: collapse;"').to_html(escape=False, index=False)
 
-    # Streamlit title
+    # Portfolio dataframe title
     st.title("Portfolio")
 
     # Render HTML in Streamlit
