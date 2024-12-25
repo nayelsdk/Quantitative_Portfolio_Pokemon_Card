@@ -1,2 +1,4 @@
-Nayel_notebookks
-__pyrache__
+__pycache__/
+*.py[cod]
+
+Nayel_notebooks/

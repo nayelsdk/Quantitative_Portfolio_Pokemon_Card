@@ -149,13 +149,13 @@ $$
 
 The average logarithmic return is then defined as:  
 $$
-R_{\text{mean}} = \frac{1}{T} \sum_{t=1}^{T} R_t
+R_{{mean}} = \frac{1}{T} \sum_{t=1}^{T} R_t
 $$  
 
 Where:  
-- \(R_{\text{mean}}\) is the mean logarithmic return.  
-- \(T\) is the number of logarithmic returns for the card.  
-- \(R_t\) represents the logarithmic return at iteration \(t\).  
+- $R_{\text{mean}}$ is the mean logarithmic return.  
+- $T$ is the number of logarithmic returns for the card.  
+- $R_t$ represents the logarithmic return at iteration \(t\).  
 
 ### Reliability Score  
 In addition to the mean return, the reliability score for each card is defined as:  
@@ -164,12 +164,12 @@ Reliability = \frac{1}{1 - e^{-k \cdot (x - x_0)}}
 $$  
 
 Where :
-- \(k = (MAX_K - MIN_K) \cdot s_r + MIN_K\) 
-    - \(MAX_K = 0.1\) 
-    -  \(MIN_K = 0.015\) 
-- \(x_0 = (MAX_X - MIN_X) \cdot r + MIN_X\)
-    - \(MAX_X = 600\) 
-    -  \(MIN_X = 30\) 
+$$k = (MAX_K - MIN_K) \cdot s_r + MIN_K$$
+    - $MAX_K = 0.1$ 
+    -  $MIN_K = 0.015$
+- $x_0 = (MAX_X - MIN_X) \cdot r + MIN_X$
+    - $MAX_X = 600$
+    - $MIN_X = 30$ 
 
 
 ### Why Use the Sigmoid Function?  
@@ -186,9 +186,13 @@ The closer \(s_r\) gets to 1, the more we assign a penalizing (rewarding) score 
 
 From there, we keep all cards that meet the following criteria:
 $$
-Reliability \cdot R_{mean} > 0.01 \\ Price < 0.4 \cdot M
+Reliability \cdot R_{mean} > 0.01 
 $$
 
+And :
+$$
+ Price < 0.4 \cdot M
+$$
 
 ### Markowitz Model Adaptation
 
@@ -197,11 +201,13 @@ We now have a selection of $N$ cards that will allow us to build our portfolio. 
 
 We then solve the minimization problem:
 $$
-\displaystyle \min_{w_1,\dots w_N} w^{T} \cdot \Sigma \cdot w \\
-\text{such that:}\\
-w_1+\dots +w_N = 1
+\min_{w_1,\dots, w_N} w^T \cdot \Sigma \cdot w
 $$
 
+Subject to the constraint:
+$$
+w_1 + w_2 + \dots + w_N = 1
+$$
 Where : 
 - $w_1 \dots w_N$ are the optimal weights from the Markowitz model
 
@@ -212,12 +218,20 @@ Markowitz was interesting to discover simple asset management models used in man
 **Portfolio Construction :** After determining the weights of these $N$ cards, we select $n$ cards that will compose our portfolio. To do this, we fill the portfolio by maximizing the sum of our $w_i$ while staying within a budget constraint of ±15%.
 
 $$
-Portfolio = Card_1, \dots Card_n 
-\\ 
-\text{such that:}\\
-\displaystyle w_1, \dots, w_n=\max_{w_1,\dots w_N} w_i \\
-0.85 \cdot M<\sum_{i=1}^{n} Price_{Card_{i}} < 1.15 \cdot M
+Portfolio = \{Card_1, \dots, Card_n\}
 $$
+
+Subject to the following constraints:
+
+1. Weights are determined by maximizing:
+   $$
+   w_1, \dots, w_n = \max_{w_1, \dots, w_N} w_i
+   $$
+
+2. The total price of the portfolio satisfies:
+   $$
+   0.85 \cdot M < \sum_{i=1}^{n} Price_{Card_{i}} < 1.15 \cdot M
+   $$
 
 ## Visualization & Results 📈
 
@@ -253,8 +267,8 @@ RSI = 100 - \frac{100}{1 + \frac{G}{L}}
 $$
 
 Where : 
-$G$ : average gains over the selected period
-$L$ : average losses over the selected period (absolute value)
+- $G$ : average gains over the selected period
+- $L$ : average losses over the selected period (absolute value)
 
 #### Bollinger Bands (BB)
 
@@ -263,6 +277,10 @@ Bollinger Bands (BB) is a tool used to analyze periods of varying volatility in 
 They are composed of :
 $$
 BB_{upper} = SMA + 2 \cdot Std \\
+$$
+
+And
+$$
 BB_{lower} = SMA - 2 \cdot Std
 $$
 
