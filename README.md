@@ -51,7 +51,7 @@ This project was completed during the Engineering Program at [**ENSAE Paris**](h
 Clone the project :
 
 ```bash
-  git clone https://https://github.com/nayelsdk/Investment_Portfolio_Pokemon_Card_ENSAE_In_Progress.git
+  git clone https://https://github.com/nayelsdk/Quantitative_Portfolio_Pokemon_Card.git
 ```
 
 To install all the requirements locally in a virtual environment, please use the `requirements.txt` file : 
