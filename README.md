@@ -344,6 +344,6 @@ We would like to acknowledge Professor [Lino Galiana](https://www.linogaliana.fr
 ### Contributors 
 
 ![linkedin](https://img.shields.io/badge/linkedin-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)
-[BENABDESADOK Nayel](https://www.linkedin.com/in/nayel-benabdesadok)
-[KEFI Wassim](https://www.linkedin.com/in/wassim-kefi-01a57829a)
-[REN Alexandre](https://www.linkedin.com/in/alexandre-ren-a53a04292)
+- [BENABDESADOK Nayel](https://www.linkedin.com/in/nayel-benabdesadok)
+- [KEFI Wassim](https://www.linkedin.com/in/wassim-kefi-01a57829a)
+- [REN Alexandre](https://www.linkedin.com/in/alexandre-ren-a53a04292)
