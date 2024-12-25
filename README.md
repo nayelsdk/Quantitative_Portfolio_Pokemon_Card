@@ -255,8 +255,7 @@ Let's look at a concrete example, the same one used to build the portfolio at th
 | Reliability sensitivity 🎯 | 65%|
 
 #### Portfolio Price Analysis 💵
-Dans ce graphe, on peut observer l'historique passé d'un an du prix du portefolio que le modèle de Markowitz propose. 
-Dans le but d'ajouter quelques informations supplémentaires sur le portefeuille, nous avons ajouté deux indicateurs techniques : 
+In this graph, we can observe the past year's historical price of the portfolio suggested by the Markowitz model. To provide additional insights into the portfolio, we have included two technical indicators:
 
 #### Relative Strength Index (RSI)
 
