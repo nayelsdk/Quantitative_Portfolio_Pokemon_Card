@@ -1,6 +1,6 @@
 ![Logo](https://assetsio.gnwcdn.com/Pokemon-TCG-classic_r9oJvXn.jpg?width=1920&height=1920&fit=bounds&quality=80&format=jpg&auto=webp)
 
-# Pokemon Card Investment Portfolio 🃏
+# Quantitative Pokémon Card Portfolio Management 🃏
 
 With the emergence of the new Pokemon App (Pokemon TCGPlayer) and the growing popularity of the franchise, Pokemon has reached its peak in 2024. The latest card collections have become increasingly expensive, as many people seek to profit from collecting them, turning these cards into genuine investment assets.
 
