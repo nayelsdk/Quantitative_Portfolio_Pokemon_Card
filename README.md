@@ -116,7 +116,7 @@ For portfolio modeling, it was preferable to first implement a constrained minim
 
 We have approximately 3600 extracted cards. The goal is to create a portfolio of 5 to 35 Pokémon cards for an investor based on :
 
-- \(M\) : investment amount in 💲
+- $M$ : investment amount in 💲
 - \(s_r\) : the risk sensitivity parameter, a value between 0 and 1:  
   - If \(s_r = 0\), the curve is very smooth, indicating low sensitivity to risk.  
   - If \(s_r = 1\), the curve becomes steep, indicating high risk aversion.  
