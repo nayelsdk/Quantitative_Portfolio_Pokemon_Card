@@ -48,7 +48,8 @@ def plot_analysis(portfolio):
     rs = avg_gain / avg_loss
     total_prices['RSI'] = 100 - (100 / (1 + rs))
     
-    window = 20
+    #Bollinger Bands
+    window = 15
     rolling_mean = total_prices['total_price'].rolling(window=window).mean()
     rolling_std = total_prices['total_price'].rolling(window=window).std()
     total_prices['BB_upper'] = rolling_mean + (2 * rolling_std)
@@ -224,22 +225,22 @@ Returns:
         },
         paper_bgcolor='rgb(13, 13, 13)',
         plot_bgcolor='rgb(13, 13, 13)',
-        font=dict(family='Courier New', size=12, color='white'),
-        height=600, 
-        width=950, 
+        font=dict(family='Courier New', size=11, color='white'),
+        height=750, 
+        width=1100, 
         showlegend=True,
         legend=dict(
             orientation='v',  
             yanchor='middle',
             y=0.5,
             xanchor='left',
-            x=1.25,  
+            x=1.35,  
             bgcolor='rgba(13, 13, 13, 0.8)',
             borderwidth=1,
             bordercolor='rgba(255, 255, 255, 0.3)',
             font=dict(size=14) 
         ),
-        margin=dict(t=100, l=10, r=300, b=20)  
+        margin=dict(t=150, l=50, r=30, b=20)  
     )
 
     return fig

@@ -6,11 +6,11 @@ from UsefulFunctionsForModels import select_mixed_cards, calculate_covariance_ma
 from scipy.optimize import minimize
 @dataclass
 class SigmoidParameters:
-    MAX_K: float = 0.15
-    MIN_K: float = 0.01
+    MAX_K: float = 0.1
+    MIN_K: float = 0.015
     
-    MAX_X0: float = 500
-    MIN_X0: float = 10
+    MAX_X0: float = 600
+    MIN_X0: float = 30
 
 class MarkowitzOptimizer:
     def __init__(self, 
