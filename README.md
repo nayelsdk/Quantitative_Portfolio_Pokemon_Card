@@ -117,12 +117,12 @@ For portfolio modeling, it was preferable to first implement a constrained minim
 We have approximately 3600 extracted cards. The goal is to create a portfolio of 5 to 35 Pokémon cards for an investor based on :
 
 - $M$ : investment amount in 💲
-- \(s_r\) : the risk sensitivity parameter, a value between 0 and 1:  
-  - If \(s_r = 0\), the curve is very smooth, indicating low sensitivity to risk.  
-  - If \(s_r = 1\), the curve becomes steep, indicating high risk aversion.  
-- \(r\) : the risk aversion parameter, also a value between 0 and 1:  
-  - If \(r = 0\), less frequently traded cards are considered.  
-  - If \(r = 1\), only highly traded cards are considered.  
+- $s_r$ : the risk sensitivity parameter, a value between 0 and 1:  
+  - If $s_r = 0$, the curve is very smooth, indicating low sensitivity to risk.  
+  - If $s_r = 1$, the curve becomes steep, indicating high risk aversion.  
+- $r$ : the risk aversion parameter, also a value between 0 and 1:  
+  - If $r = 0$, less frequently traded cards are considered.  
+  - If $r = 1$, only highly traded cards are considered.  
 
 
 
@@ -148,9 +148,10 @@ R_t = \log\left(\frac{P_t}{P_{t-1}}\right)
 $$  
 
 The average logarithmic return is then defined as:  
+
 $$
-R_{{mean}} = \frac{1}{T} \sum_{t=1}^{T} R_t
-$$  
+R_{\text{mean}} = \frac{1}{T} \sum_{t=1}^{T} R_t
+$$
 
 Where:  
 - $R_{\text{mean}}$ is the mean logarithmic return.  
@@ -159,12 +160,13 @@ Where:
 
 ### Reliability Score  
 In addition to the mean return, the reliability score for each card is defined as:  
+
 $$
 Reliability = \frac{1}{1 - e^{-k \cdot (x - x_0)}}  
 $$  
 
 Where :
-$$k = (MAX_K - MIN_K) \cdot s_r + MIN_K$$
+- $$k = (MAX_K - MIN_K) \cdot s_r + MIN_K$$
     - $MAX_K = 0.1$ 
     -  $MIN_K = 0.015$
 - $x_0 = (MAX_X - MIN_X) \cdot r + MIN_X$
@@ -177,7 +179,7 @@ To justify the use of the sigmoid function, here is a graph illustrating how rel
 ![Fiability Score with different parameters](images/sigmoids.png)
 
 
-The closer \(s_r\) gets to 1, the more we assign a penalizing (rewarding) score for high (low) numbers of sales. Conversely, \(r\) represents the sales volume threshold where we wish to apply this gap.
+The closer $s_r$ gets to 1, the more we assign a penalizing (rewarding) score for high (low) numbers of sales. Conversely, $r$ represents the sales volume threshold where we wish to apply this gap.
 
 
  
@@ -185,11 +187,13 @@ The closer \(s_r\) gets to 1, the more we assign a penalizing (rewarding) score 
  **The goal here is to eliminate or reduce the visibility of cards with few sales and let the investor choose.** Cards with few sales typically show step-like functions, which is not realistic at all, and we cannot trust such cards (examples of cards to be added).
 
 From there, we keep all cards that meet the following criteria:
+
 $$
 Reliability \cdot R_{mean} > 0.01 
 $$
 
 And :
+
 $$
  Price < 0.4 \cdot M
 $$
@@ -200,14 +204,17 @@ $$
 We now have a selection of $N$ cards that will allow us to build our portfolio. From these cards, we extract their price history over the year to determine their covariance matrix denoted $\Sigma$.
 
 We then solve the minimization problem:
+
 $$
 \min_{w_1,\dots, w_N} w^T \cdot \Sigma \cdot w
 $$
 
 Subject to the constraint:
+
 $$
 w_1 + w_2 + \dots + w_N = 1
 $$
+
 Where : 
 - $w_1 \dots w_N$ are the optimal weights from the Markowitz model
 
@@ -223,12 +230,10 @@ $$
 
 Subject to the following constraints:
 
-1. Weights are determined by maximizing:
    $$
    w_1, \dots, w_n = \max_{w_1, \dots, w_N} w_i
    $$
-
-2. The total price of the portfolio satisfies:
+   
    $$
    0.85 \cdot M < \sum_{i=1}^{n} Price_{Card_{i}} < 1.15 \cdot M
    $$
@@ -262,6 +267,7 @@ In our portfolio analysis, it helps determine if the current portfolio position 
 - If $RSI<30$ : the portfolio is considered "oversold" - prices may be too low and could rebound.
 
 **$RSI$ Formula :**
+
 $$
 RSI = 100 - \frac{100}{1 + \frac{G}{L}}
 $$
@@ -275,11 +281,13 @@ Where :
 Bollinger Bands (BB) is a tool used to analyze periods of varying volatility in the portfolio. When the bands are wide apart, volatility is higher and prices are more likely to make significant moves. Conversely, when the bands are tight, volatility is lower and price movements tend to be more contained.
 
 They are composed of :
+
 $$
 BB_{upper} = SMA + 2 \cdot Std \\
 $$
 
 And
+
 $$
 BB_{lower} = SMA - 2 \cdot Std
 $$
