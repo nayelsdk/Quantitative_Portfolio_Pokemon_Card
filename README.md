@@ -144,13 +144,21 @@ Here, this is much better. The price history is much more reliable for this card
 The logarithmic return is calculated as: 
 
 $$ 
+{\large
+\begin{equation}
 R_t = \log\left(\frac{P_t}{P_{t-1}}\right) 
+\end{equation}
+}
 $$  
 
 The average logarithmic return is then defined as:  
 
 $$
+{\large
+\begin{equation}
 R_{\text{mean}} = \frac{1}{T} \sum_{t=1}^{T} R_t
+\end{equation}
+}
 $$
 
 Where:  
@@ -162,7 +170,11 @@ Where:
 In addition to the mean return, the reliability score for each card is defined as:  
 
 $$
+{\large
+\begin{equation}
 Reliability = \frac{1}{1 - e^{-k \cdot (x - x_0)}}  
+\end{equation}
+}
 $$  
 
 Where :
@@ -189,13 +201,21 @@ The closer $s_r$ gets to 1, the more we assign a penalizing (rewarding) score fo
 From there, we keep all cards that meet the following criteria:
 
 $$
+{\large
+\begin{equation}
 Reliability \cdot R_{mean} > 0.01 
+\end{equation}
+}
 $$
 
 And :
 
 $$
+{\large
+\begin{equation}
  Price < 0.4 \cdot M
+ \end{equation}
+}
 $$
 
 ### Markowitz Model Adaptation
@@ -206,13 +226,21 @@ We now have a selection of $N$ cards that will allow us to build our portfolio. 
 We then solve the minimization problem:
 
 $$
+{\large
+\begin{equation}
 \min_{w_1,\dots, w_N} w^T \cdot \Sigma \cdot w
+\end{equation}
+}
 $$
 
 Subject to the constraint:
 
 $$
+{\large
+\begin{equation}
 w_1 + w_2 + \dots + w_N = 1
+\end{equation}
+}
 $$
 
 Where : 
@@ -225,17 +253,29 @@ Markowitz was interesting to discover simple asset management models used in man
 **Portfolio Construction :** After determining the weights of these $N$ cards, we select $n$ cards that will compose our portfolio. To do this, we fill the portfolio by maximizing the sum of our $w_i$ while staying within a budget constraint of ±15%.
 
 $$
+{\large
+\begin{equation}
 Portfolio = \{Card_1, \dots, Card_n\}
+\end{equation}
+}
 $$
 
 Subject to the following constraints:
 
    $$
+   {\large
+    \begin{equation}
    w_1, \dots, w_n = \max_{w_1, \dots, w_N} w_i
+   \end{equation}
+    }
    $$
    
    $$
+    {\large
+    \begin{equation}
    0.85 \cdot M < \sum_{i=1}^{n} Price_{Card_{i}} < 1.15 \cdot M
+   \end{equation}
+    }
    $$
 
 ## Visualization & Results 📈
@@ -268,7 +308,11 @@ In our portfolio analysis, it helps determine if the current portfolio position 
 **$RSI$ Formula :**
 
 $$
+{\large
+\begin{equation}
 RSI = 100 - \frac{100}{1 + \frac{G}{L}}
+\end{equation}
+}
 $$
 
 Where : 
@@ -282,13 +326,21 @@ Bollinger Bands (BB) is a tool used to analyze periods of varying volatility in 
 They are composed of :
 
 $$
+{\large
+\begin{equation}
 BB_{upper} = SMA + 2 \cdot Std \\
+\end{equation}
+}
 $$
 
 And
 
 $$
+{\large
+\begin{equation}
 BB_{lower} = SMA - 2 \cdot Std
+\end{equation}
+}
 $$
 
 Where :
@@ -321,7 +373,7 @@ Finally, we propose a pie chart representing the distribution of cards in the po
 This Pokémon card investment project has several areas that warrant further exploration and improvement:
 
 #### Backtesting Needs
-The model currently lacks proper **backtesting validation**. A more robust approach would involve comparing portfolio performance using different time windows - for example, calculating average returns over 9 months versus 12 months. Additionally, past performance does not guarantee future results, making our Markowitz-based approach, which relies solely on historical prices, insufficient for real investment decisions. Time series prediction methods, as mentioned in the **Choice of Markowitz Model:** section, could provide more sophisticated forecasting.
+The model currently lacks proper **backtesting validation**. A more robust approach would involve comparing portfolio performance using different time windows - for example, calculating average returns over 9 months versus 12 months. Additionally, past performance does not guarantee future results, making our Markowitz-based approach, which relies solely on historical prices, insufficient for real investment decisions. Time series prediction methods, as mentioned in the **Choice of Markowitz Model** section, could provide more sophisticated forecasting.
 
 #### Technical Issues
 Some cards display step-function behavior in their prices, potentially leading to infinite theoretical returns. While this can be addressed by adjusting the $MIN_X$ parameter, we've kept the current settings for demonstration purposes.
