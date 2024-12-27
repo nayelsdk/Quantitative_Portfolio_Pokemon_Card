@@ -56,7 +56,8 @@ class MarkowitzOptimizer:
 
     def get_optimized_return_mean_matrix_fiability(self, threshold=0.01, ratio=0.5, N=30):
         """
-        Filter the DataFrame according to the given criterias and limits the dataframe with N to reduce time complexity of the Markowitz model
+        Filter the DataFrame according to the given criterias and limits the dataframe with N to reduce time complexity of the Markowitz model.
+        If you want more cards but more time to compute, change N.
         """
         self.df=self.add_fiability_metrics()
         filtered_df = self.df[
@@ -65,6 +66,7 @@ class MarkowitzOptimizer:
         ]
         
         if len(filtered_df) > N:
+            # Function from UsefulFunctionsForModels.py -> the half of the cards are taken according to the highest prices and the other half is taken randomly (to have different cards when we compute because of the N).
             filtered_df = select_mixed_cards(filtered_df, N)
         return filtered_df
 
@@ -95,7 +97,8 @@ class MarkowitzOptimizer:
         
         constraints, bounds = self.set_constraints()
         initial_weights = np.array([1/n_cards] * n_cards)
-        
+
+        # Markowitz problem
         result = minimize(
             self.objective_weights, 
             initial_weights, 
@@ -108,6 +111,7 @@ class MarkowitzOptimizer:
         return result.x, filtered_df
 
     def optimize_cards_sell(self):
+        # Markowitz adaptation --> takes the best weights for the investment amount.
         df = self.get_optimized_return_mean_matrix_fiability()
         prices = df["last_price"].values
         weights, _ = self.optimize_portfolio()
@@ -134,6 +138,9 @@ class MarkowitzOptimizer:
         return round(total_investment,2),  round(mean_return,3), df.iloc[selected_indices]
     
     def get_streamlit_database_markowitz(self, path_database="datas/pokemon_cards.csv"):
+        """
+        Returns the ideal dataframe for Streamlit Interface ! Join the `pokemon_cards.csv` file and the selected cards from Markowitz.
+        """
         pokemon_cards_df=pd.read_csv(path_database)
         total_investment, mean_return, df = self.optimize_cards_sell()
         df['base_id'] = df['card_id'].str.split('_').str[0]
