@@ -38,7 +38,6 @@ def setup_driver():
     chrome_options.add_argument("--headless")  # Run in headless mode
     chrome_options.add_argument("--window-size=1920,1080")  # Set standard screen size
     
-    # Additional recommended options for stability
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-extensions")
@@ -70,7 +69,6 @@ def test_button_click(driver, wait, selector, by=By.CSS_SELECTOR):
         # Wait for element to be present in DOM
         element = wait.until(EC.presence_of_element_located((by, selector)))
         
-        # Center element in viewport using smooth scrolling
         driver.execute_script("""
             arguments[0].scrollIntoView({
                 behavior: 'instant',
@@ -79,7 +77,6 @@ def test_button_click(driver, wait, selector, by=By.CSS_SELECTOR):
             });
         """, element)
         
-        # Ensure element is clickable
         wait.until(EC.element_to_be_clickable((by, selector)))
         
         # Use JavaScript click for better reliability
@@ -116,14 +113,12 @@ def get_chart_data(driver, wait):
         - Captures full HTML for price extraction
     """
     try:
-        # Attendre que le graphique soit chargé
         wait.until(EC.presence_of_element_located((By.CLASS_NAME, "martech-charts-history")))
         
-        # Extraire l'état de la carte depuis le titre du graphique
         card_state_element = driver.find_element(By.CLASS_NAME, "charts-title")
         card_state = card_state_element.text if card_state_element else "Unknown"
         
-        # Obtenir le contenu HTML
+        # HTML content
         html_content = driver.page_source
         
         return html_content, card_state
