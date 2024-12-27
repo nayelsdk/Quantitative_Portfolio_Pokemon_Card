@@ -99,7 +99,7 @@ if st.sidebar.button("Run 🏃"):
 
     portfolio_plot = portfolio.drop(columns = ['Card Info','id'])
 
-    #Renaming and reorder
+    #Rename and reorder
     portfolio_plot = portfolio_plot.rename(columns={
     'name': 'Card Name',
     'rarity': 'Rarity',
