@@ -7,14 +7,14 @@ def plot_analysis(portfolio):
     """Creates two interactive visualizations for Pokemon card portfolio analysis.
 
     Args:
-        portfolio (DataFrame): DataFrame containing Pokemon card information
+        portfolio (DataFrame): DataFrame containing Pokemon card information from Markowitz problem
 
 
     Returns:
         tuple(plotly.graph_objects.Figure, plotly.graph_objects.Figure): Two interactive figures:
             
         Figure 1 - Portfolio Price Analysis:
-            - Main panel: Portfolio value over time with Bollinger Bands
+            - Main panel: Portfolio value over time with Bollinger Bands (BBupper and BBlower)
             - Sub panel: RSI (Relative Strength Index) with overbought/oversold levels
             
         Figure 2 - Returns and Volume Analysis:
@@ -54,9 +54,12 @@ def plot_analysis(portfolio):
     rolling_std = total_prices['total_price'].rolling(window=window).std()
     total_prices['BB_upper'] = rolling_mean + (2 * rolling_std)
     total_prices['BB_lower'] = rolling_mean - (2 * rolling_std)
-    
+
+    #Log Returns
     total_prices['log_return'] = np.log(total_prices['total_price'] / total_prices['total_price'].shift(1))
-    
+
+
+    #Avg Sales
     total_sales['month'] = total_sales['date'].dt.to_period('M')
     monthly_avg_sales = total_sales.groupby('month')['quantity_sold'].mean().reset_index()
     monthly_avg_sales['month'] = monthly_avg_sales['month'].dt.to_timestamp()
@@ -110,7 +113,7 @@ def plot_analysis(portfolio):
                         vertical_spacing=0.05,
                         row_heights=[0.7, 0.3])
     
-    # Fig: Prix and RSI
+    # Fig: Prices and RSI
     fig1.add_trace(
         go.Scatter(x=total_prices['date'], y=total_prices['total_price'],
                   name='Portfolio Value', line=dict(color='rgb(0, 183, 255)', width=2)),
@@ -138,7 +141,7 @@ def plot_analysis(portfolio):
         row=2, col=1
     )
     
-    # Fig 2: 
+    # Fig 2: returns and sales volume
     fig2 = make_subplots(rows=2, cols=1, shared_xaxes=True,
                         vertical_spacing=0.05,
                         row_heights=[0.7, 0.3])
@@ -182,7 +185,7 @@ def plot_analysis(portfolio):
 def plot_pie(portfolio):
     """
     Args:
-    portfolio (DataFrame): DataFrame containing Pokemon card information
+    portfolio (DataFrame): DataFrame containing Pokemon card information from Markowitz
 
 Returns:
     plotly.graph_objects.Figure: Interactive donut chart showing:
