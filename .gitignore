@@ -2,3 +2,5 @@ __pycache__/
 *.py[cod]
 
 Nayel_notebooks/
+chromedriver/
+.DS_Store
