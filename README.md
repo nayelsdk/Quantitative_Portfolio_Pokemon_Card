@@ -36,14 +36,14 @@ This project was completed during the Engineering Program at [**ENSAE Paris**](h
     - `pokemon_cards.csv` : The primary CSV file containing comprehensive information on all Pokemon cards.
     - `pokemon_data_popularity` : Dataset ranking the top 240 Pokemon by popularity.
     - `price_history/` : Directory containing ~3,600 individual card price history files.
-- `PokemonCardManager.py` : Card information extraction and processing module. Updates `pokemon_cards.csv` with new card data.
+- `pokemon_card_manager.py` : Card information extraction and processing module. Updates `pokemon_cards.csv` with new card data.
 
-- `GetHistoricCardPrices.py` : Price history extraction module for all cards listed in `pokemon_cards.csv`.
+- `get_historic_card_prices.py` : Price history extraction module for all cards listed in `pokemon_cards.csv`.
 
-- `UsefulFunctionsForModels.py` : Utility functions supporting the Markowitz Portfolio Optimization Model.
+- `useful_functions_for_models.py` : Utility functions supporting the Markowitz Portfolio Optimization Model.
 
-- `MarkowitzPortfolioOptimizer.py` : Implementation of the Markowitz Model adapted for Pokemon card trading with binary weights.
-- `PlotsStreamlit.py` : Visualization functions for Streamlit dashboard and portfolio analysis.
+- `markowitz_portfolio_optimizer.py` : Implementation of the Markowitz Model adapted for Pokemon card trading with binary weights.
+- `plots_streamlit.py` : Visualization functions for Streamlit dashboard and portfolio analysis.
 - `streamlit.py` : Interactive web dashboard for portfolio presentation using Streamlit framework.
 
 ## Run locally
