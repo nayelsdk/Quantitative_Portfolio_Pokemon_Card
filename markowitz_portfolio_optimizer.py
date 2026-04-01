@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import Dict
 from dataclasses import dataclass
-from UsefulFunctionsForModels import select_mixed_cards, calculate_covariance_matrix, get_dataframe_cards_matrix
+from useful_functions_for_models import select_mixed_cards, calculate_covariance_matrix, get_dataframe_cards_matrix
 from scipy.optimize import minimize
 @dataclass
 class SigmoidParameters:
