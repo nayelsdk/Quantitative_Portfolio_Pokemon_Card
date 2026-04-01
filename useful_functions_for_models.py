@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 import glob
+import matplotlib.pyplot as plt
 
 def get_file_paths(directory):
     """
@@ -157,6 +158,92 @@ def calculate_covariance_matrix(cards_df,folder_path = 'datas/price_history'):
         return covariance_matrix
     else:
         return pd.DataFrame()
+
+
+def plot_distributions(cards_df, log_scale=False):
+    """
+    Affiche la distribution des prix et des ventes totales de toutes les cartes.
+
+    Args:
+        cards_df (pd.DataFrame): Sortie de get_dataframe_cards_matrix(),
+                                 avec colonnes 'last_price' et 'Quantity Sold'.
+        log_scale (bool): Si True, applique une échelle log sur l'axe x (log-normale).
+    """
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+    for ax, col, label in [
+        (axes[0], 'Quantity Sold', 'Quantité vendue'),
+        (axes[1], 'last_price',    'Prix ($)')
+    ]:
+        data = cards_df[col].dropna()
+        if log_scale:
+            data = data[data > 0]
+            ax.hist(np.log(data), bins=100, edgecolor='black')
+            ax.set_xlabel(f'log({label})')
+        else:
+            ax.hist(data, bins=100, edgecolor='black')
+            ax.set_xlabel(label)
+        ax.set_ylabel('Nombre de cartes')
+
+    axes[0].set_title('Distribution des ventes totales')
+    axes[1].set_title('Distribution des prix')
+
+    plt.tight_layout()
+    plt.show()
+
+
+def get_csv_by_card_id(card_id, folder_path='datas/price_history'):
+    """
+    Renvoie le DataFrame associé à un identifiant de carte.
+
+    Cherche dans les sous-dossiers low_sales, medium_sales et high_sales
+    un fichier CSV dont le nom correspond à card_id.
+
+    Args:
+        card_id (str): Identifiant de la carte (ex: 'swsh6-207_Holofoil').
+        folder_path (str): Chemin vers le dossier contenant les historiques de prix.
+
+    Returns:
+        pd.DataFrame: Données de prix de la carte.
+
+    Raises:
+        FileNotFoundError: Si aucun fichier CSV ne correspond à l'identifiant donné.
+    """
+    for subdir in ['low_sales', 'medium_sales', 'high_sales']:
+        matching_files = glob.glob(os.path.join(folder_path, subdir, f'{card_id}_*.csv'))
+        if matching_files:
+            return pd.read_csv(matching_files[0])
+
+    raise FileNotFoundError(f"Aucun fichier CSV trouvé pour la carte '{card_id}' dans {folder_path}")
+
+
+def plot_card_history(card_id, folder_path='datas/price_history'):
+    """
+    Affiche l'évolution du prix et le nombre de ventes d'une carte.
+
+    Args:
+        card_id (str): Identifiant de la carte (ex: 'hgss3-26').
+        folder_path (str): Chemin vers le dossier contenant les historiques de prix.
+
+    Returns:
+        matplotlib.figure.Figure: Figure avec deux panneaux :
+            - Haut : évolution du prix dans le temps (ligne)
+            - Bas  : nombre de ventes par semaine (barres)
+    """
+    df = get_csv_by_card_id(card_id, folder_path)
+    df['start_date'] = pd.to_datetime(df['start_date'])
+
+    _, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 6), sharex=True)
+
+    ax1.plot(df['start_date'], df['price'])
+    ax1.set_ylabel('Prix ($)')
+    ax1.set_title(f'Historique — {card_id}')
+
+    ax2.bar(df['start_date'], df['quantity_sold'], width=5)
+    ax2.set_ylabel('Ventes')
+
+    plt.tight_layout()
+    plt.show()
 
 
 def select_mixed_cards(filtered_df, N):
