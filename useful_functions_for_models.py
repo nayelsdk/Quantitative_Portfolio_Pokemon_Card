@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import glob
 import matplotlib.pyplot as plt
+from statsmodels.nonparametric.smoothers_lowess import lowess
 
 def get_file_paths(directory):
     """
@@ -187,6 +188,134 @@ def plot_distributions(cards_df, log_scale=False):
 
     axes[0].set_title('Distribution des ventes totales')
     axes[1].set_title('Distribution des prix')
+
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_liquidity_frontier(cards_df):
+    """
+    Scatter plot log(prix_médian) × fréquence de trading (nb semaines avec volume > 0 / 52).
+
+    Les points sont colorés selon trois zones de liquidité :
+        - Rouge  : fréquence < 0.25  → quasi-illiquide (< 1 vente/mois)
+        - Orange : 0.25 ≤ fréquence ≤ 0.60 → liquidité intermédiaire
+        - Vert   : fréquence > 0.60  → tradé régulièrement
+
+    Args:
+        cards_df (pd.DataFrame): Sortie de get_dataframe_cards_matrix(),
+                                 avec colonnes 'card_id' et 'Card Info'.
+    """
+    LOW, HIGH = 0.25, 0.60
+
+    rows = []
+    for _, row in cards_df.iterrows():
+        df = row['Card Info']
+        median_price = df['price'].median()
+        if median_price <= 0:
+            continue
+        freq = (df['quantity_sold'] > 0).sum() / len(df)
+        rows.append({'log_price': np.log(median_price), 'freq': freq})
+
+    plot_df = pd.DataFrame(rows)
+
+    def zone_color(f):
+        if f < LOW:
+            return 'red'
+        elif f <= HIGH:
+            return 'orange'
+        return 'green'
+
+    plot_df['color'] = plot_df['freq'].apply(zone_color)
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    for color, label in [('red', f'Illiquide  (freq < {LOW})'),
+                         ('orange', f'Intermédiaire ({LOW}–{HIGH})'),
+                         ('green', f'Liquide  (freq > {HIGH})')]:
+        mask = plot_df['color'] == color
+        ax.scatter(plot_df.loc[mask, 'log_price'], plot_df.loc[mask, 'freq'],
+                   c=color, label=f'{label}  (n={mask.sum()})',
+                   alpha=0.5, s=20, edgecolors='none')
+
+    ax.axhline(LOW, color='red',    linestyle='--', linewidth=1.2, alpha=0.8)
+    ax.axhline(HIGH, color='green', linestyle='--', linewidth=1.2, alpha=0.8)
+
+    ax.set_xlabel('log(Prix médian annuel $)')
+    ax.set_ylabel('Fréquence de trading (semaines actives / 52)')
+    ax.set_title('Frontière de liquidité — Univers investissable')
+    ax.set_ylim(-0.02, 1.05)
+    ax.legend(loc='upper left', fontsize=9)
+
+    # Annotation des zones
+    xmin = plot_df['log_price'].min()
+    ax.text(xmin, LOW / 2,        'Quasi-illiquide',    color='red',    fontsize=8, va='center')
+    ax.text(xmin, (LOW + HIGH) / 2, 'Liquidité partielle', color='orange', fontsize=8, va='center')
+    ax.text(xmin, (HIGH + 1) / 2, 'Univers investissable', color='green', fontsize=8, va='center')
+
+    plt.tight_layout()
+    plt.show()
+
+    n_total  = len(plot_df)
+    n_invest = (plot_df['color'] == 'green').sum()
+    print(f"Univers investissable (freq > {HIGH}) : {n_invest} / {n_total} cartes "
+          f"({100 * n_invest / n_total:.1f}%)")
+
+
+def plot_market_structure(cards_df, cards_db_path='datas/pokemon_cards.csv'):
+    """
+    Scatter plot log(prix_médian) × log(volume_médian) coloré par rareté,
+    avec une régression LOWESS non-paramétrique.
+
+    Args:
+        cards_df (pd.DataFrame): Sortie de get_dataframe_cards_matrix(),
+                                 avec colonnes 'card_id' et 'Card Info'.
+        cards_db_path (str): Chemin vers le CSV principal des cartes (pour la rareté).
+    """
+    # Calcul des médianes par carte
+    rows = []
+    for _, row in cards_df.iterrows():
+        df = row['Card Info']
+        median_price = df['price'].median()
+        non_zero_volumes = df['quantity_sold'][df['quantity_sold'] > 0]
+        if median_price <= 0 or non_zero_volumes.empty:
+            continue
+        median_volume = non_zero_volumes.median()
+        # Supprime le suffixe _Holofoil / _Reverse_Holofoil pour rejoindre la DB
+        base_id = row['card_id'].rsplit('_', 1)[0]
+        rows.append({
+            'card_id': base_id,
+            'log_price': np.log(median_price),
+            'log_volume': np.log(median_volume)
+        })
+
+    plot_df = pd.DataFrame(rows)
+
+    # Jointure avec la rareté
+    db = pd.read_csv(cards_db_path, usecols=['id', 'rarity'])
+    plot_df = plot_df.merge(db, left_on='card_id', right_on='id', how='left')
+    plot_df['rarity'] = plot_df['rarity'].fillna('Unknown')
+
+    # Couleur par rareté
+    rarities = plot_df['rarity'].unique()
+    colors = plt.cm.tab20.colors
+    color_map = {r: colors[i % len(colors)] for i, r in enumerate(rarities)}
+
+    fig, ax = plt.subplots(figsize=(12, 7))
+
+    for rarity, group in plot_df.groupby('rarity'):
+        ax.scatter(group['log_price'], group['log_volume'],
+                   color=color_map[rarity], label=rarity, alpha=0.6, s=25)
+
+    # LOWESS sur l'ensemble des points
+    sorted_df = plot_df.sort_values('log_price')
+    smoothed = lowess(sorted_df['log_volume'], sorted_df['log_price'], frac=0.4)
+    ax.plot(smoothed[:, 0], smoothed[:, 1], color='red', linewidth=2, label='LOWESS')
+
+    ax.set_xlabel('log(Prix médian annuel)')
+    ax.set_ylabel('log(Volume médian hebdomadaire)')
+    ax.set_title('Structure du marché : Prix vs Liquidité par rareté')
+    ax.legend(bbox_to_anchor=(1.01, 1), loc='upper left', fontsize=8)
 
     plt.tight_layout()
     plt.show()
